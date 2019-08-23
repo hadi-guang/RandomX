@@ -126,6 +126,8 @@ namespace randomx {
 
 	template class InterpretedVm<AlignedAllocator<CacheLineSize>, false>;
 	template class InterpretedVm<AlignedAllocator<CacheLineSize>, true>;
+#if LINUX_MMAP
 	template class InterpretedVm<LargePageAllocator, false>;
 	template class InterpretedVm<LargePageAllocator, true>;
+#endif
 }

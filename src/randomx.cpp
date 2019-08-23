@@ -40,7 +40,12 @@ extern "C" {
 		randomx_cache *cache = new randomx_cache();
 
 		try {
-			switch (flags & (RANDOMX_FLAG_JIT | RANDOMX_FLAG_LARGE_PAGES)) {
+#if LINUX_MMAP
+			switch (flags & (RANDOMX_FLAG_JIT | RANDOMX_FLAG_LARGE_PAGES)) 
+#else
+			switch (flags & (RANDOMX_FLAG_JIT)) 
+#endif
+			{
 				case RANDOMX_FLAG_DEFAULT:
 					cache->dealloc = &randomx::deallocCache<randomx::DefaultAllocator>;
 					cache->jit = nullptr;
@@ -56,7 +61,7 @@ extern "C" {
 					cache->datasetInit = cache->jit->getDatasetInitFunc();
 					cache->memory = (uint8_t*)randomx::DefaultAllocator::allocMemory(randomx::CacheSize);
 					break;
-
+#if LINUX_MMAP
 				case RANDOMX_FLAG_LARGE_PAGES:
 					cache->dealloc = &randomx::deallocCache<randomx::LargePageAllocator>;
 					cache->jit = nullptr;
@@ -72,7 +77,7 @@ extern "C" {
 					cache->datasetInit = cache->jit->getDatasetInitFunc();
 					cache->memory = (uint8_t*)randomx::LargePageAllocator::allocMemory(randomx::CacheSize);
 					break;
-
+#endif
 				default:
 					UNREACHABLE;
 			}
@@ -98,11 +103,14 @@ extern "C" {
 		randomx_dataset *dataset = new randomx_dataset();
 
 		try {
+#if LINUX_MMAP
 			if (flags & RANDOMX_FLAG_LARGE_PAGES) {
 				dataset->dealloc = &randomx::deallocDataset<randomx::LargePageAllocator>;
 				dataset->memory = (uint8_t*)randomx::LargePageAllocator::allocMemory(randomx::DatasetSize);
 			}
-			else {
+			else
+#endif
+			{
 				dataset->dealloc = &randomx::deallocDataset<randomx::DefaultAllocator>;
 				dataset->memory = (uint8_t*)randomx::DefaultAllocator::allocMemory(randomx::DatasetSize);
 			}
@@ -136,7 +144,12 @@ extern "C" {
 		randomx_vm *vm = nullptr;
 
 		try {
-			switch (flags & (RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES | RANDOMX_FLAG_LARGE_PAGES)) {
+#if LINUX_MMAP
+			switch (flags & (RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES | RANDOMX_FLAG_LARGE_PAGES)) 
+#else
+			switch (flags & (RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES))
+#endif
+			{
 				case RANDOMX_FLAG_DEFAULT:
 					vm = new randomx::InterpretedLightVmDefault();
 					break;
@@ -168,6 +181,7 @@ extern "C" {
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES:
 					vm = new randomx::CompiledVmHardAes();
 					break;
+#if LINUX_MMAP
 
 				case RANDOMX_FLAG_LARGE_PAGES:
 					vm = new randomx::InterpretedLightVmLargePage();
@@ -200,7 +214,7 @@ extern "C" {
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES | RANDOMX_FLAG_LARGE_PAGES:
 					vm = new randomx::CompiledVmLargePageHardAes();
 					break;
-
+#endif
 				default:
 					UNREACHABLE;
 			}

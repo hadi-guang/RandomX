@@ -55,6 +55,8 @@ namespace randomx {
 
 	template class CompiledVm<AlignedAllocator<CacheLineSize>, false>;
 	template class CompiledVm<AlignedAllocator<CacheLineSize>, true>;
+#if LINUX_MMAP
 	template class CompiledVm<LargePageAllocator, false>;
 	template class CompiledVm<LargePageAllocator, true>;
+#endif
 }

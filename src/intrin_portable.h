@@ -541,20 +541,20 @@ FORCE_INLINE rx_vec_i128 rx_set_int_vec_i128(int _I3, int _I2, int _I1, int _I0)
 	return v;
 };
 
-FORCE_INLINE rx_vec_i128 rx_xor_vec_i128(rx_vec_i128 _A, rx_vec_i128 _B) {
+FORCE_INLINE rx_vec_i128 rx_xor_vec_i128(rx_vec_i128 _A, rx_vec_i128 _BB) {
 	rx_vec_i128 c;
-	c.u32[0] = _A.u32[0] ^ _B.u32[0];
-	c.u32[1] = _A.u32[1] ^ _B.u32[1];
-	c.u32[2] = _A.u32[2] ^ _B.u32[2];
-	c.u32[3] = _A.u32[3] ^ _B.u32[3];
+	c.u32[0] = _A.u32[0] ^ _BB.u32[0];
+	c.u32[1] = _A.u32[1] ^ _BB.u32[1];
+	c.u32[2] = _A.u32[2] ^ _BB.u32[2];
+	c.u32[3] = _A.u32[3] ^ _BB.u32[3];
 	return c;
 }
 
-FORCE_INLINE rx_vec_i128 rx_load_vec_i128(rx_vec_i128 const*_P) {
+FORCE_INLINE rx_vec_i128 rx_load_vec_i128(rx_vec_i128 const*_PP) {
 #if defined(NATIVE_LITTLE_ENDIAN)
-	return *_P;
+	return *_PP;
 #else
-	uint32_t* ptr = (uint32_t*)_P;
+	uint32_t* ptr = (uint32_t*)_PP;
 	rx_vec_i128 c;
 	c.u32[0] = load32(ptr + 0);
 	c.u32[1] = load32(ptr + 1);
@@ -564,15 +564,15 @@ FORCE_INLINE rx_vec_i128 rx_load_vec_i128(rx_vec_i128 const*_P) {
 #endif
 }
 
-FORCE_INLINE void rx_store_vec_i128(rx_vec_i128 *_P, rx_vec_i128 _B) {
+FORCE_INLINE void rx_store_vec_i128(rx_vec_i128 *_PP, rx_vec_i128 _BB) {
 #if defined(NATIVE_LITTLE_ENDIAN)
-	*_P = _B;
+	*_PP = _BB;
 #else
-	uint32_t* ptr = (uint32_t*)_P;
-	store32(ptr + 0, _B.u32[0]);
-	store32(ptr + 1, _B.u32[1]);
-	store32(ptr + 2, _B.u32[2]);
-	store32(ptr + 3, _B.u32[3]);
+	uint32_t* ptr = (uint32_t*)_PP;
+	store32(ptr + 0, _BB.u32[0]);
+	store32(ptr + 1, _BB.u32[1]);
+	store32(ptr + 2, _BB.u32[2]);
+	store32(ptr + 3, _BB.u32[3]);
 #endif
 }
 

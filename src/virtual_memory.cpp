@@ -36,8 +36,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __APPLE__
 #include <mach/vm_statistics.h>
 #endif
+#if LINUX_MMAP
 #include <sys/types.h>
 #include <sys/mman.h>
+#endif
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
@@ -83,6 +85,7 @@ void setPrivilege(const char* pszPrivilege, BOOL bEnable) {
 }
 #endif
 
+#if LINUX_MMAP
 void* allocExecutableMemory(std::size_t bytes) {
 	void* mem;
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -133,3 +136,5 @@ void freePagedMemory(void* ptr, std::size_t bytes) {
 	munmap(ptr, bytes);
 #endif
 }
+#endif
+

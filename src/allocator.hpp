@@ -37,10 +37,10 @@ namespace randomx {
 		static void* allocMemory(size_t);
 		static void freeMemory(void*, size_t);
 	};
-
+#if LINUX_MMAP
 	struct LargePageAllocator {
 		static void* allocMemory(size_t);
 		static void freeMemory(void*, size_t);
 	};
-
+#endif
 }

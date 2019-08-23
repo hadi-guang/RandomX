@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "jit_compiler_x86.hpp"
 #elif defined(__aarch64__)
 #include "jit_compiler_a64.hpp"
+#elif defined(__riscv)
+#include "jit_compiler_riscv.hpp"
 #else
 #include "jit_compiler_fallback.hpp"
 #endif

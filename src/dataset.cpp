@@ -65,8 +65,9 @@ namespace randomx {
 	}
 
 	template void deallocCache<DefaultAllocator>(randomx_cache* cache);
+#if LINUX_MMAP
 	template void deallocCache<LargePageAllocator>(randomx_cache* cache);
-
+#endif
 	void initCache(randomx_cache* cache, const void* key, size_t keySize) {
 		uint32_t memory_blocks, segment_length;
 		argon2_instance_t instance;

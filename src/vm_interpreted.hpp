@@ -70,6 +70,8 @@ namespace randomx {
 
 	using InterpretedVmDefault = InterpretedVm<AlignedAllocator<CacheLineSize>, true>;
 	using InterpretedVmHardAes = InterpretedVm<AlignedAllocator<CacheLineSize>, false>;
+#if LINUX_MMAP
 	using InterpretedVmLargePage = InterpretedVm<LargePageAllocator, true>;
 	using InterpretedVmLargePageHardAes = InterpretedVm<LargePageAllocator, false>;
+#endif
 }

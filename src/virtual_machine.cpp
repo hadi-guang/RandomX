@@ -132,6 +132,8 @@ namespace randomx {
 
 	template class VmBase<AlignedAllocator<CacheLineSize>, false>;
 	template class VmBase<AlignedAllocator<CacheLineSize>, true>;
+#if LINUX_MMAP
 	template class VmBase<LargePageAllocator, false>;
 	template class VmBase<LargePageAllocator, true>;
+#endif
 }

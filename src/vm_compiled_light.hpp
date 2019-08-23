@@ -59,6 +59,8 @@ namespace randomx {
 
 	using CompiledLightVmDefault = CompiledLightVm<AlignedAllocator<CacheLineSize>, true>;
 	using CompiledLightVmHardAes = CompiledLightVm<AlignedAllocator<CacheLineSize>, false>;
+#if LINUX_MMAP
 	using CompiledLightVmLargePage = CompiledLightVm<LargePageAllocator, true>;
 	using CompiledLightVmLargePageHardAes = CompiledLightVm<LargePageAllocator, false>;
+#endif
 }

@@ -1,0 +1,6 @@
+#PREFIX=/opt/riscv64-imafdc/bin/riscv64-unknown-elf-
+#PREFIX=/opt/riscv/bin/riscv64-unknown-elf-
+
+export PATH=$PATH:/opt/riscv64-imafdc/bin/
+../RandomX/configure --host=riscv64-unknown-elf
+make

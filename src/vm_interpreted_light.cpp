@@ -50,6 +50,8 @@ namespace randomx {
 
 	template class InterpretedLightVm<AlignedAllocator<CacheLineSize>, false>;
 	template class InterpretedLightVm<AlignedAllocator<CacheLineSize>, true>;
+#if LINUX_MMAP
 	template class InterpretedLightVm<LargePageAllocator, false>;
 	template class InterpretedLightVm<LargePageAllocator, true>;
+#endif
 }

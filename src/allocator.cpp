@@ -48,7 +48,7 @@ namespace randomx {
 	}
 
 	template class AlignedAllocator<CacheLineSize>;
-
+#if LINUX_MMAP
 	void* LargePageAllocator::allocMemory(size_t count) {
 		return allocLargePagesMemory(count);
 	}
@@ -56,5 +56,5 @@ namespace randomx {
 	void LargePageAllocator::freeMemory(void* ptr, size_t count) {
 		freePagedMemory(ptr, count);
 	};
-
+#endif
 }

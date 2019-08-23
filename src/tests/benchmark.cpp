@@ -43,7 +43,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <VersionHelpers.h>
 #endif
+#if LINUX_THREAD
 #include "affinity.hpp"
+#endif
 
 const uint8_t blockTemplate_[] = {
 		0x07, 0x07, 0xf7, 0xa4, 0xf0, 0xd6, 0x05, 0xb3, 0x03, 0x26, 0x08, 0x16, 0xba, 0x3f, 0x10, 0x90, 0x2e, 0x1a, 0x14,
@@ -103,25 +105,40 @@ struct DatasetAllocException : public MemoryException {
 		return "Dataset allocation failed";
 	}
 };
-
-void mine(randomx_vm* vm, std::atomic<uint32_t>& atomicNonce, AtomicHash& result, uint32_t noncesCount, int thread, int cpuid=-1) {
+#if LINUX_THREAD
+void mine(randomx_vm* vm, std::atomic<uint32_t>& atomicNonce, AtomicHash& result, uint32_t noncesCount, int thread, int cpuid=-1) 
+#else
+void mine(randomx_vm* vm, uint32_t& atomicNonce, uint64_t* result, uint32_t noncesCount, int thread)
+#endif
+{
+#if LINUX_THREAD
 	if (cpuid >= 0) {
 		int rc = set_thread_affinity(cpuid);
 		if (rc) {
 			std::cerr << "Failed to set thread affinity for thread " << thread << " (error=" << rc << ")" <<  std::endl;
 		}
 	}
+#endif
 	uint64_t hash[RANDOMX_HASH_SIZE / sizeof(uint64_t)];
 	uint8_t blockTemplate[sizeof(blockTemplate_)];
 	memcpy(blockTemplate, blockTemplate_, sizeof(blockTemplate));
 	void* noncePtr = blockTemplate + 39;
+#if LINUX_THREAD
 	auto nonce = atomicNonce.fetch_add(1);
-
+#else
+	auto nonce = atomicNonce++;
+#endif
 	while (nonce < noncesCount) {
 		store32(noncePtr, nonce);
 		randomx_calculate_hash(vm, blockTemplate, sizeof(blockTemplate), &hash);
+#if LINUX_THREAD
 		result.xorWith(hash);
 		nonce = atomicNonce.fetch_add(1);
+#else
+		for (int i = 0; i < 4; ++i)
+			result[i] ^= hash[i];
+		nonce = atomicNonce++;
+#endif
 	}
 }
 
@@ -152,11 +169,17 @@ int main(int argc, char** argv) {
 		printUsage(argv[0]);
 		return 0;
 	}
-
+#if LINUX_THREAD
 	std::atomic<uint32_t> atomicNonce(0);
 	AtomicHash result;
+#else
+	uint32_t atomicNonce=0;
+	uint64_t result[4];
+#endif
 	std::vector<randomx_vm*> vms;
+#if LINUX_THREAD
 	std::vector<std::thread> threads;
+#endif
 	randomx_dataset* dataset;
 	randomx_cache* cache;
 	randomx_flags flags = RANDOMX_FLAG_DEFAULT;
@@ -192,11 +215,11 @@ int main(int argc, char** argv) {
 	else {
 		std::cout << " - small pages mode" << std::endl;
 	}
-
+#if LINUX_THREAD
 	if (threadAffinity) {
 		std::cout << " - thread affinity (" << mask_to_string(threadAffinity) << ")" << std::endl;
 	}
-
+#endif
 	std::cout << "Initializing";
 	if (miningMode)
 		std::cout << " (" << initThreadCount << " thread" << (initThreadCount > 1 ? "s)" : ")");
@@ -219,6 +242,7 @@ int main(int argc, char** argv) {
 				throw DatasetAllocException();
 			}
 			uint32_t datasetItemCount = randomx_dataset_item_count();
+#if LINUX_THREAD
 			if (initThreadCount > 1) {
 				auto perThread = datasetItemCount / initThreadCount;
 				auto remainder = datasetItemCount % initThreadCount;
@@ -235,8 +259,13 @@ int main(int argc, char** argv) {
 			else {
 				randomx_init_dataset(dataset, cache, 0, datasetItemCount);
 			}
+#else
+			randomx_init_dataset(dataset, cache, 0, datasetItemCount);
+#endif
 			randomx_release_cache(cache);
+#if LINUX_THREAD
 			threads.clear();
+#endif
 		}
 		std::cout << "Memory initialized in " << sw.getElapsed() << " s" << std::endl;
 		std::cout << "Initializing " << threadCount << " virtual machine(s) ..." << std::endl;
@@ -249,6 +278,7 @@ int main(int argc, char** argv) {
 		}
 		std::cout << "Running benchmark (" << noncesCount << " nonces) ..." << std::endl;
 		sw.restart();
+#if LINUX_THREAD
 		if (threadCount > 1) {
 			for (unsigned i = 0; i < vms.size(); ++i) {
 				int cpuid = -1;
@@ -266,7 +296,9 @@ int main(int argc, char** argv) {
 		else {
 			mine(vms[0], std::ref(atomicNonce), std::ref(result), noncesCount, 0);
 		}
-
+#else
+		mine(vms[0], atomicNonce, result, noncesCount, 0);
+#endif
 		double elapsed = sw.getElapsed();
 		for (unsigned i = 0; i < vms.size(); ++i)
 			randomx_destroy_vm(vms[i]);
@@ -275,7 +307,15 @@ int main(int argc, char** argv) {
 		else
 			randomx_release_cache(cache);
 		std::cout << "Calculated result: ";
+#if LINUX_THREAD
 		result.print(std::cout);
+#else
+		for (int i = 0; i < 4; ++i)
+		{
+			outputHex(std::cout, (char*)&result[i], sizeof(result[i]));
+		}
+
+#endif
 		if (noncesCount == 1000 && seedValue == 0)
 			std::cout << "Reference result:  38d47ea494480bff8d621189e8e92747288bb1da6c75dc401f2ab4b6807b6010" << std::endl;
 		if (!miningMode) {

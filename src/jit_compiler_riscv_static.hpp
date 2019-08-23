@@ -28,47 +28,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <new>
-#include <cstdint>
-#include "virtual_machine.hpp"
-#include "jit_compiler.hpp"
-#include "allocator.hpp"
-#include "dataset.hpp"
-
-namespace randomx {
-
-	template<class Allocator, bool softAes>
-	class CompiledVm : public VmBase<Allocator, softAes> {
-	public:
-		void* operator new(size_t size) {
-			void* ptr = AlignedAllocator<CacheLineSize>::allocMemory(size);
-			if (ptr == nullptr)
-				throw std::bad_alloc();
-			return ptr;
-		}
-		void operator delete(void* ptr) {
-			AlignedAllocator<CacheLineSize>::freeMemory(ptr, sizeof(CompiledVm));
-		}
-		void setDataset(randomx_dataset* dataset) override;
-		void run(void* seed) override;
-
-		using VmBase<Allocator, softAes>::mem;
-		using VmBase<Allocator, softAes>::program;
-		using VmBase<Allocator, softAes>::config;
-		using VmBase<Allocator, softAes>::reg;
-		using VmBase<Allocator, softAes>::scratchpad;
-		using VmBase<Allocator, softAes>::datasetPtr;
-		using VmBase<Allocator, softAes>::datasetOffset;
-	protected:
-		void execute();
-
-		JitCompiler compiler;
-	};
-
-	using CompiledVmDefault = CompiledVm<AlignedAllocator<CacheLineSize>, true>;
-	using CompiledVmHardAes = CompiledVm<AlignedAllocator<CacheLineSize>, false>;
-#if LINUX_MMAP
-	using CompiledVmLargePage = CompiledVm<LargePageAllocator, true>;
-	using CompiledVmLargePageHardAes = CompiledVm<LargePageAllocator, false>;
-#endif
+extern "C" {
+	void randomx_program_prologue();
+	void randomx_program_loop_begin();
+	void randomx_program_loop_load();
+	void randomx_program_start();
+	void randomx_program_read_dataset();
+	void randomx_program_read_dataset_sshash_init();
+	void randomx_program_read_dataset_sshash_fin();
+	void randomx_program_loop_store();
+	void randomx_program_loop_end();
+	void randomx_dataset_init();
+	void randomx_program_epilogue();
+	void randomx_sshash_load();
+	void randomx_sshash_prefetch();
+	void randomx_sshash_end();
+	void randomx_sshash_init();
+	void randomx_program_end();
 }
