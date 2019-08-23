@@ -1,6 +1,11 @@
-#PREFIX=/opt/riscv64-imafdc/bin/riscv64-unknown-elf-
-#PREFIX=/opt/riscv/bin/riscv64-unknown-elf-
-
+#riscv
+cd /home/dihao.zheng/github/randomx-riscv
 export PATH=$PATH:/opt/riscv64-imafdc/bin/
-../RandomX/configure --host=riscv64-unknown-elf
+../RandomX/configure --host=riscv64-unknown-elf --enable-riscv
+make
+
+#x86
+cd /home/dihao.zheng/github/riscv-x86
+export PATH=$PATH:/opt/riscv64-imafdc/bin/
+../RandomX/configure
 make

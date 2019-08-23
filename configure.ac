@@ -13,6 +13,15 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_PROG_LIBTOOL
 
+AC_ARG_ENABLE([riscv],
+[  --enable-riscv Turn on riscv],
+[case "${enableval}" in
+yes) riscv=true ;AC_MSG_NOTICE([select yes]);;
+no) riscv=false ;AC_MSG_NOTICE([select no]);;
+*) AC_MSG_ERROR([bad value ${enableval} for --enable-riscv]) ;;
+esac],[riscv=false])
+AM_CONDITIONAL([COND_RISCV], [test x$riscv = xtrue])
+
 # Automake will require the sources fle declared with AC_LIBSOURCE
 # in the directory specifed by this macro
 # AC_CONFIG_LIBOBJ_DIR([])

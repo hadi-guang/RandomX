@@ -41,7 +41,75 @@ namespace randomx {
 	/*
 
 	REGISTER ALLOCATION:
+	; ra  -> return address
+	; sp  -> stack pointer
+	
+	; t0  -> regfile
+	; t1  -> memory registers "ma" (high 32 bits), "mx" (low 32 bits)
+	; t2  -> scratchpad pointer
+	; t3  -> program_iterations
+	; t4  -> tmp1
+	; t5  -> tmp2
+	; t6  -> n64
+	; s1  -> L1M		need save
+	; s2  -> L2M		need save
+	; s3  -> L3M		need save
+	; s4  ->
+	; s5  ->
+	; s6  ->
+	; s7  ->
+	; s8  ->
+	; s9  ->
+	; s10 ->
+	; s11 ->
+	
+	; a0  -> "r0"
+	; a1  -> "r1"
+	; a2  -> "r2"
+	; a3  -> "r3"
+	; a4  -> "r4"
+	; a5  -> "r5"
+	; a6  -> "r6"
+	; a7  -> "r7"
 
+
+	; fa0 -> "fl0"
+	; fa1 -> "fl1"
+	; fa2 -> "fl2"
+	; fa3 -> "fl3"
+	; fa4 -> "fh0"
+	; fa5 -> "fh1"
+	; fa6 -> "fh2"
+	; fa7 -> "fh3"
+	
+	; ft0 -> "el0"
+	; ft1 -> "el1"
+	; ft2 -> "el2"
+	; ft3 -> "el3"
+	; ft4 -> "eh0"
+	; ft5 -> "eh1"
+	; ft6 -> "eh2"
+	; ft7 -> "eh3"
+	
+	; fs0 -> "al0"		need save
+	; fs1 -> "al1"		need save
+	; fs2 -> "al2"		need save
+	; fs3 -> "al3"		need save
+	; fs4 -> "ah0"		need save
+	; fs5 -> "ah1"		need save
+	; fs6 -> "ah2"		need save
+	; fs7 -> "ah3"		need save
+	
+	; ft8  -> temporary
+	; ft9  -> E 'and' mask = 0x00ffffffffffffff00ffffffffffffff
+	; ft10 -> E 'or' mask  = 0x3*00000000******3*00000000******
+	; ft11 -> scale mask   = 0x81f000000000000081f0000000000000
+	; fs8  -> temporary												need save
+	; fs9  -> E 'and' mask = 0x00ffffffffffffff00ffffffffffffff		need save
+	; fs10 -> E 'or' mask  = 0x3*00000000******3*00000000******		need save
+	; fs11 -> scale mask   = 0x81f000000000000081f0000000000000		need save
+	/////////////////////////////////////////////////////////////////////////////////////
+	// x86
 	; rax -> temporary
 	; rbx -> iteration counter "ic"
 	; rcx -> temporary
