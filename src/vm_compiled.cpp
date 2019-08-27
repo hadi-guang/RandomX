@@ -28,7 +28,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vm_compiled.hpp"
 #include "common.hpp"
-
 #include "zlog.h"
 namespace randomx {
 

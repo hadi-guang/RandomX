@@ -45,18 +45,18 @@ namespace randomx {
 	; t1  -> memory registers "ma" (high 32 bits), "mx" (low 32 bits)
 	; t2  -> scratchpad pointer
 	; t3  -> program_iterations
-	; t4  -> tmp1
-	; t5  -> tmp2
-	; t6  -> n64
+	; t4  -> registers	"spAddr1" (high 32 bits), "spAddr0" (low 32 bits)
+	; t5  -> RANDOMX_SCRATCHPAD_MASK << 32 + RANDOMX_SCRATCHPAD_MASK
+	; t6  -> dataset pointer
 	; s1  -> L1M		need save
 	; s2  -> L2M		need save
 	; s3  -> L3M		need save
-	; s4  ->
-	; s5  ->
-	; s6  ->
-	; s7  ->
-	; s8  ->
-	; s9  ->
+	; s4  -> TMP1		need save
+	; s5  -> TMP2		need save
+	; s6  -> E 'and' mask  =	0x00ffffffffffffff	need save
+	; s7  -> E 'or' mask low=	0x3*00000000******	need save
+	; s8  -> E 'or' mask high=	0x3*00000000******	need save
+	; s9  -> scale mask   =		0x81f0000000000000	need save
 	; s10 ->
 	; s11 ->
 	
@@ -97,14 +97,14 @@ namespace randomx {
 	; fs6 -> "ah2"		need save
 	; fs7 -> "ah3"		need save
 	
-	; ft8  -> temporary
-	; ft9  -> E 'and' mask = 0x00ffffffffffffff00ffffffffffffff
-	; ft10 -> E 'or' mask  = 0x3*00000000******3*00000000******
-	; ft11 -> scale mask   = 0x81f000000000000081f0000000000000
-	; fs8  -> temporary												need save
-	; fs9  -> E 'and' mask = 0x00ffffffffffffff00ffffffffffffff		need save
-	; fs10 -> E 'or' mask  = 0x3*00000000******3*00000000******		need save
-	; fs11 -> scale mask   = 0x81f000000000000081f0000000000000		need save
+	; ft8  ->
+	; ft9  ->
+	; ft10 ->
+	; ft11 ->
+	; fs8  ->
+	; fs9  ->
+	; fs10 ->
+	; fs11 ->
 	/////////////////////////////////////////////////////////////////////////////////////
 	// x86
 	; rax -> temporary
@@ -171,46 +171,90 @@ namespace randomx {
 #define	RISCV_R_S10		(26)
 #define	RISCV_R_S11		(27)
 #define	RISCV_R_T3		(28)	//program_iterations
-#define	RISCV_R_T4		(29)	//tmp1
-#define	RISCV_R_T5		(30)	//tmp2
-#define	RISCV_R_T6		(31)	//n64
+#define	RISCV_R_T4		(29)	
+#define	RISCV_R_T5		(30)	
+#define	RISCV_R_T6		(31)	
 	
 	
 	typedef enum
 	{
-		RISCVOP_LOAD	= 0b0000011,
-		RISCVOP_LOADFP	= 0b0000111,
-		RISCVOP_CUSTOM0 = 0b0001011,
-		RISCVOP_MISCMEM = 0b0001111,
-		RISCVOP_IMM 	= 0b0010011,
-		RISCVOP_AUIPC	= 0b0010111,
-		RISCVOP_IMM32	= 0b0011011,
-		RISCVOP_STORE	= 0b0100011,
-		RISCVOP_STOREFP = 0b0100111,
-		RISCVOP_CUSTOM1 = 0b0101011,
-		RISCVOP_AMO 	= 0b0101111,
-		RISCVOP_OP		= 0b0110011,
-		RISCVOP_LUI 	= 0b0110111,
-		RISCVOP_OP32	= 0b0111011,
-		RISCVOP_MADD	= 0b1000011,
-		RISCVOP_MSUB	= 0b1000111,
-		RISCVOP_NMSUB	= 0b1001011,
-		RISCVOP_NMADD	= 0b1001111,
-		RISCVOP_FP		= 0b1010011,
-		RISCVOP_RESERVED1= 0b1010111,
-		RISCVOP_CUSTOM2 = 0b1011011,	
-		RISCVOP_BRANCH	= 0b1100011,
-		RISCVOP_JALR	= 0b1100111,
-		RISCVOP_RESERVED2= 0b1101011,
-		RISCVOP_JAL 	= 0b1101111,
-		RISCVOP_SYSTEM	= 0b1110011,
-		RISCVOP_RESERVED3= 0b1110111,
-		RISCVOP_CUSTOM3 = 0b1111011,	
+		RISCVOP_LOAD		= 0b0000011,
+		RISCVOP_LOADFP		= 0b0000111,
+		RISCVOP_CUSTOM0 	= 0b0001011,
+		RISCVOP_MISCMEM 	= 0b0001111,
+		RISCVOP_IMM 		= 0b0010011,
+		RISCVOP_AUIPC		= 0b0010111,
+		RISCVOP_IMM32		= 0b0011011,
+		RISCVOP_STORE		= 0b0100011,
+		RISCVOP_STOREFP 	= 0b0100111,
+		RISCVOP_CUSTOM1 	= 0b0101011,
+		RISCVOP_AMO 		= 0b0101111,
+		RISCVOP_OP			= 0b0110011,
+		RISCVOP_LUI 		= 0b0110111,
+		RISCVOP_OP32		= 0b0111011,
+		RISCVOP_MADD		= 0b1000011,
+		RISCVOP_MSUB		= 0b1000111,
+		RISCVOP_NMSUB		= 0b1001011,
+		RISCVOP_NMADD		= 0b1001111,
+		RISCVOP_FP			= 0b1010011,
+		RISCVOP_RESERVED1	= 0b1010111,
+		RISCVOP_CUSTOM2 	= 0b1011011,	
+		RISCVOP_BRANCH		= 0b1100011,
+		RISCVOP_JALR		= 0b1100111,
+		RISCVOP_RESERVED2	= 0b1101011,
+		RISCVOP_JAL 		= 0b1101111,
+		RISCVOP_SYSTEM		= 0b1110011,
+		RISCVOP_RESERVED3	= 0b1110111,
+		RISCVOP_CUSTOM3 	= 0b1111011,	
 	}RISCVOP;
 	typedef enum
 	{
-		RISCVFUNC3_OP_XOR	=0b100,
+		RISCVFUNC3_OP_R_ADD	= 0b000,
+		RISCVFUNC3_OP_R_SUB	= 0b000,
+		RISCVFUNC3_OP_R_SLL	= 0b001,
+		RISCVFUNC3_OP_R_SLT	= 0b010,
+		RISCVFUNC3_OP_R_SLTU= 0b011,
+		RISCVFUNC3_OP_R_XOR	= 0b100,
+		RISCVFUNC3_OP_R_SRL	= 0b101,
+		RISCVFUNC3_OP_R_SRA	= 0b101,
+		RISCVFUNC3_OP_R_OR	= 0b110,
+		RISCVFUNC3_OP_R_AND	= 0b111,
+		
+		RISCVFUNC3_IMM_I_ADDI	= 0b000,
+		RISCVFUNC3_IMM_I_SLTI	= 0b010,
+		RISCVFUNC3_IMM_I_SLTIU	= 0b011,
+		RISCVFUNC3_IMM_I_XORI	= 0b100,
+		RISCVFUNC3_IMM_I_ORI	= 0b110,
+		RISCVFUNC3_IMM_I_ANDI	= 0b111,
+		RISCVFUNC3_IMM_R_SLLI	= 0b001,
+		RISCVFUNC3_IMM_R_SRLI	= 0b101,
+		RISCVFUNC3_IMM_R_SRAI	= 0b101,
+
+		RISCVFUNC3_BRANCH_B_BEQ	= 0b000,
+		RISCVFUNC3_BRANCH_B_BNE	= 0b001,
+		RISCVFUNC3_BRANCH_B_BLT	= 0b100,
+		RISCVFUNC3_BRANCH_B_BGE	= 0b101,
+		RISCVFUNC3_BRANCH_B_BLTU= 0b110,
+		RISCVFUNC3_BRANCH_B_BGEU= 0b111,
+		
 	}RISVFUNC3;
+	typedef enum
+	{
+		RISCVFUNC7_OP_R_ADD		= 0b0000000,
+		RISCVFUNC7_OP_R_SUB		= 0b0100000,
+		RISCVFUNC7_OP_R_SLL		= 0b0000000,
+		RISCVFUNC7_OP_R_SLT		= 0b0000000,
+		RISCVFUNC7_OP_R_SLTU	= 0b0000000,
+		RISCVFUNC7_OP_R_XOR		= 0b0000000,
+		RISCVFUNC7_OP_R_SRL		= 0b0000000,
+		RISCVFUNC7_OP_R_SRA		= 0b0100000,
+		RISCVFUNC7_OP_R_OR		= 0b0000000,
+		RISCVFUNC7_OP_R_AND		= 0b0000000,
+
+		RISCVFUNC7_IMM_R_SLLI	= 0b0000000,
+		RISCVFUNC7_IMM_R_SRLI	= 0b0000000,
+		RISCVFUNC7_IMM_R_SRAI	= 0b0100000,
+	}RISVFUNC7;
 
 
 	uint32_t mk_J(RISCVOP op_code,uint8_t rd,uint32_t imm_21);

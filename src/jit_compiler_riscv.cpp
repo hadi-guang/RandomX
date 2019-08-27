@@ -177,15 +177,37 @@ enum
 			}R;
 			struct
 			{
+				uint32_t op_code:7;
+				uint32_t rd:5;
+				uint32_t funct3:3;
+				uint32_t rs1:5;
+				uint32_t imm_11_0:12;
 			}I;
 			struct
 			{
+				uint32_t op_code:7;
+				uint32_t imm_4_0:5;
+				uint32_t funct3:3;
+				uint32_t rs1:5;
+				uint32_t rs2:5;
+				uint32_t imm_11_5:7;
 			}S;
 			struct
 			{
+				uint32_t op_code:7;
+				uint32_t imm_11:1;
+				uint32_t imm_4_1:4;
+				uint32_t funct3:3;
+				uint32_t rs1:5;
+				uint32_t rs2:5;
+				uint32_t imm_10_5:6;
+				uint32_t imm_12:1;
 			}B;
 			struct
 			{
+				uint32_t op_code:7;
+				uint32_t rd:5;
+				uint32_t imm_31_12:20;
 			}U;
 			struct
 			{
@@ -231,17 +253,7 @@ enum
 			}CJ;
 			uint16_t data;
 		}riscv_c_t;
-		uint32_t mk_J(RISCVOP op_code,uint8_t rd,uint32_t imm_21)
-		{
-			riscv_t t;
-			t.J.op_code = op_code;
-			t.J.rd		= rd;
-			t.J.imm_10_1= (imm_21 & 0b000000000011111111110) >> 1;
-			t.J.imm_11	= (imm_21 & 0b000000000100000000000) >> 11;
-			t.J.imm_19_12=(imm_21 & 0b011111111000000000000) >> 12;
-			t.J.imm_20	= (imm_21 & 0b100000000000000000000) >> 20;
-			return t.data;
-		}
+
 		uint32_t mk_R(RISCVOP op_code,RISVFUNC3 funct3,uint8_t funct7,uint8_t rd,uint8_t rs1,uint8_t rs2)
 		{
 			riscv_t t;
@@ -253,6 +265,60 @@ enum
 			t.R.funct7	= funct7;
 			return t.data;
 		}
+		uint32_t mk_I(RISCVOP op_code,RISVFUNC3 funct3,uint8_t rd,uint8_t rs1,uint32_t imm_12)
+		{
+			riscv_t t;
+			t.I.op_code = op_code;
+			t.I.rd		= rd;
+			t.I.funct3	= funct3;
+			t.I.rs1		= rs1;
+			t.I.imm_11_0= imm_12;
+			return t.data;
+		}
+		uint32_t mk_S(RISCVOP op_code,RISVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_12)
+		{
+			riscv_t t;
+			t.S.op_code = op_code;
+			t.S.funct3	= funct3;
+			t.S.rs1		= rs1;
+			t.S.rs2		= rs2;
+			t.S.imm_4_0		= (imm_12 & 0b000000000000000011111) >> 0;
+			t.S.imm_11_5	= (imm_12 & 0b000000000111111100000) >> 5;
+			return t.data;
+		}
+		uint32_t mk_B(RISCVOP op_code,RISVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_13)
+		{
+			riscv_t t;
+			t.B.op_code = op_code;
+			t.B.funct3	= funct3;
+			t.B.rs1		= rs1;
+			t.B.rs2		= rs2;
+			t.B.imm_4_1		= (imm_13 & 0b000000000000000011110) >> 1;
+			t.B.imm_10_5	= (imm_13 & 0b000000000011111100000) >> 5;
+			t.B.imm_11		= (imm_13 & 0b000000000100000000000) >> 11;
+			t.B.imm_12		= (imm_13 & 0b000000001000000000000) >> 12;
+			return t.data;
+		}
+		uint32_t mk_U(RISCVOP op_code,uint8_t rd,uint32_t imm_20)
+		{
+			riscv_t t;
+			t.U.op_code = op_code;
+			t.U.rd		= rd;
+			t.U.imm_31_12= (imm_20) >> 0;
+			return t.data;
+		}
+		uint32_t mk_J(RISCVOP op_code,uint8_t rd,uint32_t imm_21)
+		{
+			riscv_t t;
+			t.J.op_code = op_code;
+			t.J.rd		= rd;
+			t.J.imm_10_1= (imm_21 & 0b000000000011111111110) >> 1;
+			t.J.imm_11	= (imm_21 & 0b000000000100000000000) >> 11;
+			t.J.imm_19_12=(imm_21 & 0b011111111000000000000) >> 12;
+			t.J.imm_20	= (imm_21 & 0b100000000000000000000) >> 20;
+			return t.data;
+		}
+		
 		uint16_t mk_cj(uint8_t op_code_c,uint32_t imm_12)
 		{
 			riscv_c_t t;
@@ -371,13 +437,39 @@ enum
 		}
 		codePos = prologueSize;
 		printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
-//		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
-#if 1 //TMP
+		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
+		uint32_t v;
+		uint8_t rs1,rs2;
+#if 1 //randomx
 		//	uint64_t spMix = nreg.r[config.readReg0] ^ nreg.r[config.readReg1];
 		//	spAddr0 ^= spMix;
 		//	spAddr1 ^= spMix >> 32;
+
+		if (pcfg.readReg0 == 0)
+		{
+			rs1 = RISCV_R_A0;
+		}
+		else//1
+		{
+			rs1 = RISCV_R_A1;
+		}
+		v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_XOR,0,RISCV_R_T4,RISCV_R_T4,rs1);
+		emit32(v);
+		if (pcfg.readReg1 == 2)
+		{
+			rs2 = RISCV_R_A2;
+		}
+		else//3
+		{
+			rs2 = RISCV_R_A3;
+		}
+		v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_XOR,0,RISCV_R_T4,RISCV_R_T4,rs2);
+		emit32(v);
+
 		//	spAddr0 &= ScratchpadL3Mask64;
 		//	spAddr1 &= ScratchpadL3Mask64;
+		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
+		codePos += loopLoadSize;
 #else
 		emit(REX_XOR_RAX_R64);
 		emitByte(0xc0 + pcfg.readReg0);
@@ -385,12 +477,18 @@ enum
 		emitByte(0xc0 + pcfg.readReg1);
 		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
 		codePos += loopLoadSize;
+#endif
+#if 1 //randomx
+#else
 		for (unsigned i = 0; i < prog.getSize(); ++i) {
 			Instruction& instr = prog(i);
 			instr.src %= RegistersCount;
 			instr.dst %= RegistersCount;
 			generateCode(instr, i);
 		}
+#endif
+#if 1 //randomx
+#else
 		emit(REX_MOV_RR);
 		emitByte(0xc0 + pcfg.readReg2);
 		emit(REX_XOR_EAX);
@@ -399,14 +497,15 @@ enum
 	}
 
 	void JitCompilerRiscv::generateProgramEpilogue(Program& prog) {
+	uint32_t v;
 #if 1 //TMP
 
-	// TODO:保存数据
-	// TODO:条件跳转到循环开始
+	// TODO:save data 
+	// TODO:jump to loop begin
 	
 	printf("[%s][%d]epilogueOffset:0x%x\n",__func__,__LINE__,epilogueOffset);
 	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
-	uint32_t v;
+	//jump to epilogue
 	v = mk_J(RISCVOP_JAL,RISCV_R_ZERO,epilogueOffset - codePos);
 	emit32(v);
 #else

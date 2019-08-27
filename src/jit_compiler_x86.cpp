@@ -279,13 +279,15 @@ namespace randomx {
 		codePos = prologueSize;
 		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
 		printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
-#if 0
+
 		emit(REX_XOR_RAX_R64);
 		emitByte(0xc0 + pcfg.readReg0);
 		emit(REX_XOR_RAX_R64);
 		emitByte(0xc0 + pcfg.readReg1);
+
 		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
 		codePos += loopLoadSize;
+#if 0
 		for (unsigned i = 0; i < prog.getSize(); ++i) {
 			Instruction& instr = prog(i);
 			instr.src %= RegistersCount;
@@ -300,9 +302,9 @@ namespace randomx {
 	}
 
 	void JitCompilerX86::generateProgramEpilogue(Program& prog) {
-#if 0
 		memcpy(code + codePos, codeLoopStore, loopStoreSize);
 		codePos += loopStoreSize;
+#if 0
 		emit(SUB_EBX);
 		emit(JNZ);
 		emit32(prologueSize - codePos - 4);

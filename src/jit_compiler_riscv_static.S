@@ -66,21 +66,25 @@
 .balign 64
 DECL(randomx_program_prologue):
 	#include "riscv/program_prologue.inc"
-
-#	movapd xmm13, xmmword ptr mantissaMask[rip]
-#	movapd xmm14, xmmword ptr exp240[rip]
-#	movapd xmm15, xmmword ptr scaleMask[rip]
+# load s6-s9
+curip:
+	auipc	s4, %pcrel_hi(mantissaMask)
+	addi	s4, s4, %pcrel_lo(curip)
+	ld s6,		(0x00)(s4)	# load E 'and' mask
+	ld s7,		0x10(s4)	# load E 'or' mask lo
+	ld s8,		0x18(s4)	# load E 'or' mask hi
+	ld s9,		0x20(s4)	# load scale mask
 	j DECL(randomx_program_loop_begin)
 
 .balign 64
-#	#include "asm/program_xmm_constants.inc"
+	#include "riscv/program_constants.inc"
 
 .balign 64
 DECL(randomx_program_loop_begin):
 	nop
 
 DECL(randomx_program_loop_load):
-#	#include "asm/program_loop_load.inc"
+	#include "riscv/program_loop_load.inc"
 
 DECL(randomx_program_start):
 	nop
