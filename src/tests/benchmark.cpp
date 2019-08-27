@@ -175,6 +175,11 @@ int main(int argc, char** argv) {
 #else
 	uint32_t atomicNonce=0;
 	uint64_t result[4];
+	for (int i = 0; i < 4; ++i)
+	{
+		result[i] = 0;
+	}
+		
 #endif
 	std::vector<randomx_vm*> vms;
 #if LINUX_THREAD
@@ -314,6 +319,7 @@ int main(int argc, char** argv) {
 		{
 			outputHex(std::cout, (char*)&result[i], sizeof(result[i]));
 		}
+		printf("\n");
 
 #endif
 		if (noncesCount == 1000 && seedValue == 0)

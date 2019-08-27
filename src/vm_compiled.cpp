@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vm_compiled.hpp"
 #include "common.hpp"
 
+#include "zlog.h"
 namespace randomx {
 
 	static_assert(sizeof(MemoryRegisters) == 2 * sizeof(addr_t) + sizeof(uintptr_t), "Invalid alignment of struct randomx::MemoryRegisters");
@@ -50,7 +51,20 @@ namespace randomx {
 
 	template<class Allocator, bool softAes>
 	void CompiledVm<Allocator, softAes>::execute() {
+		printf("ma:%d mx:%d\n",mem.ma,mem.mx);
 		compiler.getProgramFunc()(reg, mem, scratchpad, RANDOMX_PROGRAM_ITERATIONS);
+		printf("scratchpad:%p\n",scratchpad);
+		p_hex("reg\n",&reg,sizeof(reg));
+		printf("f:%f %f %f %f %f %f %f %f \n"
+			,reg.f[0].lo,reg.f[0].hi
+			,reg.f[1].lo,reg.f[1].hi
+			,reg.f[2].lo,reg.f[2].hi
+			,reg.f[3].lo,reg.f[3].hi);
+		printf("e:%f %f %f %f %f %f %f %f \n"
+			,reg.e[0].lo,reg.e[0].hi
+			,reg.e[1].lo,reg.e[1].hi
+			,reg.e[2].lo,reg.e[2].hi
+			,reg.e[3].lo,reg.e[3].hi);
 	}
 
 	template class CompiledVm<AlignedAllocator<CacheLineSize>, false>;

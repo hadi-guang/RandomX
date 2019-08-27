@@ -5,7 +5,7 @@ bin_PROGRAMS = ztest benchmark randomx-generator randomx-tests
 ztest_SOURCES = ztest.c zS.S
 else
 bin_PROGRAMS = benchmark randomx-generator randomx-tests
-AM_CXXFLAGS = -std=c++11
+AM_CXXFLAGS = -DLINUX_MMAP -DLINUX_THREAD -std=c++11 
 endif
 
 if COND_RISCV

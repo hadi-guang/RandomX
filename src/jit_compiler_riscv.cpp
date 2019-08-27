@@ -35,115 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "program.hpp"
 #include "reciprocal.h"
 #include "virtual_memory.hpp"
-
+#include "zlog.h"
 #include "allocator.hpp"
 namespace randomx {
-	/*
-
-	REGISTER ALLOCATION:
-	; ra  -> return address
-	; sp  -> stack pointer
-	
-	; t0  -> regfile
-	; t1  -> memory registers "ma" (high 32 bits), "mx" (low 32 bits)
-	; t2  -> scratchpad pointer
-	; t3  -> program_iterations
-	; t4  -> tmp1
-	; t5  -> tmp2
-	; t6  -> n64
-	; s1  -> L1M		need save
-	; s2  -> L2M		need save
-	; s3  -> L3M		need save
-	; s4  ->
-	; s5  ->
-	; s6  ->
-	; s7  ->
-	; s8  ->
-	; s9  ->
-	; s10 ->
-	; s11 ->
-	
-	; a0  -> "r0"
-	; a1  -> "r1"
-	; a2  -> "r2"
-	; a3  -> "r3"
-	; a4  -> "r4"
-	; a5  -> "r5"
-	; a6  -> "r6"
-	; a7  -> "r7"
-
-
-	; fa0 -> "fl0"
-	; fa1 -> "fl1"
-	; fa2 -> "fl2"
-	; fa3 -> "fl3"
-	; fa4 -> "fh0"
-	; fa5 -> "fh1"
-	; fa6 -> "fh2"
-	; fa7 -> "fh3"
-	
-	; ft0 -> "el0"
-	; ft1 -> "el1"
-	; ft2 -> "el2"
-	; ft3 -> "el3"
-	; ft4 -> "eh0"
-	; ft5 -> "eh1"
-	; ft6 -> "eh2"
-	; ft7 -> "eh3"
-	
-	; fs0 -> "al0"		need save
-	; fs1 -> "al1"		need save
-	; fs2 -> "al2"		need save
-	; fs3 -> "al3"		need save
-	; fs4 -> "ah0"		need save
-	; fs5 -> "ah1"		need save
-	; fs6 -> "ah2"		need save
-	; fs7 -> "ah3"		need save
-	
-	; ft8  -> temporary
-	; ft9  -> E 'and' mask = 0x00ffffffffffffff00ffffffffffffff
-	; ft10 -> E 'or' mask  = 0x3*00000000******3*00000000******
-	; ft11 -> scale mask   = 0x81f000000000000081f0000000000000
-	; fs8  -> temporary												need save
-	; fs9  -> E 'and' mask = 0x00ffffffffffffff00ffffffffffffff		need save
-	; fs10 -> E 'or' mask  = 0x3*00000000******3*00000000******		need save
-	; fs11 -> scale mask   = 0x81f000000000000081f0000000000000		need save
-	/////////////////////////////////////////////////////////////////////////////////////
-	// x86
-	; rax -> temporary
-	; rbx -> iteration counter "ic"
-	; rcx -> temporary
-	; rdx -> temporary
-	; rsi -> scratchpad pointer
-	; rdi -> dataset pointer
-	; rbp -> memory registers "ma" (high 32 bits), "mx" (low 32 bits)
-	; rsp -> stack pointer
-	; r8  -> "r0"
-	; r9  -> "r1"
-	; r10 -> "r2"
-	; r11 -> "r3"
-	; r12 -> "r4"
-	; r13 -> "r5"
-	; r14 -> "r6"
-	; r15 -> "r7"
-	; xmm0 -> "f0"
-	; xmm1 -> "f1"
-	; xmm2 -> "f2"
-	; xmm3 -> "f3"
-	; xmm4 -> "e0"
-	; xmm5 -> "e1"
-	; xmm6 -> "e2"
-	; xmm7 -> "e3"
-	; xmm8 -> "a0"
-	; xmm9 -> "a1"
-	; xmm10 -> "a2"
-	; xmm11 -> "a3"
-	; xmm12 -> temporary
-	; xmm13 -> E 'and' mask = 0x00ffffffffffffff00ffffffffffffff
-	; xmm14 -> E 'or' mask  = 0x3*00000000******3*00000000******
-	; xmm15 -> scale mask   = 0x81f000000000000081f0000000000000
-
-	*/
 
 	const uint8_t* codePrologue = (uint8_t*)&randomx_program_prologue;
 	const uint8_t* codeLoopBegin = (uint8_t*)&randomx_program_loop_begin;
@@ -265,6 +159,116 @@ namespace randomx {
 
 	static const uint8_t* NOPX[] = { NOP1, NOP2, NOP3, NOP4, NOP5, NOP6, NOP7, NOP8 };
 
+enum
+{
+//	RISVOPC_J	= 
+}RISVOPC;
+
+		typedef union riscv_t
+		{
+			struct
+			{
+				uint32_t op_code:7;
+				uint32_t rd:5;
+				uint32_t funct3:3;
+				uint32_t rs1:5;
+				uint32_t rs2:5;
+				uint32_t funct7:7;
+			}R;
+			struct
+			{
+			}I;
+			struct
+			{
+			}S;
+			struct
+			{
+			}B;
+			struct
+			{
+			}U;
+			struct
+			{
+				uint32_t op_code:7;
+				uint32_t rd:5;
+				uint32_t imm_19_12:8;
+				uint32_t imm_11:1;
+				uint32_t imm_10_1:10;
+				uint32_t imm_20:1;
+			}J;
+			uint32_t data;
+		}riscv_t;
+		typedef union riscv_c_t
+		{
+			struct
+			{}CR;
+			struct
+			{}CI;
+			struct
+			{}CSS;
+			struct
+			{}CIW;
+			struct
+			{}CL;
+			struct
+			{}CS;
+			struct
+			{}CA;
+			struct
+			{}CB;
+			struct
+			{
+				uint16_t op:2;
+				uint16_t imm5:1;
+				uint16_t imm3_1:3;
+				uint16_t imm7:1;
+				uint16_t imm6:1;
+				uint16_t imm10:1;
+				uint16_t imm9_8:2;
+				uint16_t imm4:1;
+				uint16_t imm11:1;
+				uint16_t funct3:3;
+			}CJ;
+			uint16_t data;
+		}riscv_c_t;
+		uint32_t mk_J(RISCVOP op_code,uint8_t rd,uint32_t imm_21)
+		{
+			riscv_t t;
+			t.J.op_code = op_code;
+			t.J.rd		= rd;
+			t.J.imm_10_1= (imm_21 & 0b000000000011111111110) >> 1;
+			t.J.imm_11	= (imm_21 & 0b000000000100000000000) >> 11;
+			t.J.imm_19_12=(imm_21 & 0b011111111000000000000) >> 12;
+			t.J.imm_20	= (imm_21 & 0b100000000000000000000) >> 20;
+			return t.data;
+		}
+		uint32_t mk_R(RISCVOP op_code,RISVFUNC3 funct3,uint8_t funct7,uint8_t rd,uint8_t rs1,uint8_t rs2)
+		{
+			riscv_t t;
+			t.R.op_code = op_code;
+			t.R.rd		= rd;
+			t.R.funct3	= funct3;
+			t.R.rs1		= rs1;
+			t.R.rs2		= rs2;
+			t.R.funct7	= funct7;
+			return t.data;
+		}
+		uint16_t mk_cj(uint8_t op_code_c,uint32_t imm_12)
+		{
+			riscv_c_t t;
+			t.CJ.op		= (op_code_c & 0b00011) >> 0;
+			t.CJ.funct3	= (op_code_c & 0b11100) >> 2;
+			t.CJ.imm3_1	= (imm_12	& 0b000000001110) >> 1;
+			t.CJ.imm4	= (imm_12	& 0b000000010000) >> 4;
+			t.CJ.imm5	= (imm_12	& 0b000000100000) >> 5;
+			t.CJ.imm6	= (imm_12	& 0b000001000000) >> 6;
+			t.CJ.imm7	= (imm_12	& 0b000010000000) >> 7;
+			t.CJ.imm9_8	= (imm_12	& 0b001100000000) >> 8;
+			t.CJ.imm10	= (imm_12	& 0b010000000000) >> 10;
+			t.CJ.imm11	= (imm_12	& 0b100000000000) >> 11;
+			return t.data;
+		}
+
 	size_t JitCompilerRiscv::getCodeSize() {
 		return codePos - prologueSize;
 	}
@@ -276,7 +280,18 @@ namespace randomx {
 		code = (uint8_t*)AlignedAllocator<CacheLineSize>::allocMemory(CodeSize);
 #endif
 		memcpy(code, codePrologue, prologueSize);
+		codePos = prologueSize;
+		printf("[%s][%d]offset codeLoopBegin:0x%x\n",__func__,__LINE__,codeLoopBegin - codePrologue);
+
+		printf("[%s][%d]prologueSize:0x%x\n",__func__,__LINE__,prologueSize);
+		
+		printf("[%s][%d]epilogueOffset:0x%x\n",__func__,__LINE__,epilogueOffset);
+
+		printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
 		memcpy(code + epilogueOffset, codeEpilogue, epilogueSize);
+
+	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
+
 	}
 
 	JitCompilerRiscv::~JitCompilerRiscv() {
@@ -289,19 +304,27 @@ namespace randomx {
 
 	void JitCompilerRiscv::generateProgram(Program& prog, ProgramConfiguration& pcfg) {
 		generateProgramPrologue(prog, pcfg);
+#if 0
 		memcpy(code + codePos, codeReadDataset, readDatasetSize);
 		codePos += readDatasetSize;
+#endif
 		generateProgramEpilogue(prog);
 	}
 
 	void JitCompilerRiscv::generateProgramLight(Program& prog, ProgramConfiguration& pcfg, uint32_t datasetOffset) {
+	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
+		printf("[%s][%d] eMask[0]0x%x eMask[1]0x%x\n",__func__,__LINE__,pcfg.eMask[0],pcfg.eMask[1]);
+		printf("[%s][%d]readReg0:0x%x readReg1:0x%x readReg2:0x%x readReg3:0x%x\n",__func__,__LINE__,pcfg.readReg0,pcfg.readReg1,pcfg.readReg2,pcfg.readReg3);
+
 		generateProgramPrologue(prog, pcfg);
+#if 0
 		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize);
 		emit(ADD_EBX_I);
 		emit32(datasetOffset / CacheLineSize);
 		emitByte(CALL);
 		emit32(superScalarHashOffset - (codePos + 4));
 		emit(codeReadDatasetLightSshFin, readDatasetLightFinSize);
+#endif
 		generateProgramEpilogue(prog);
 	}
 
@@ -347,7 +370,15 @@ namespace randomx {
 			registerUsage[i] = -1;
 		}
 		codePos = prologueSize;
-		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
+		printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
+//		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
+#if 1 //TMP
+		//	uint64_t spMix = nreg.r[config.readReg0] ^ nreg.r[config.readReg1];
+		//	spAddr0 ^= spMix;
+		//	spAddr1 ^= spMix >> 32;
+		//	spAddr0 &= ScratchpadL3Mask64;
+		//	spAddr1 &= ScratchpadL3Mask64;
+#else
 		emit(REX_XOR_RAX_R64);
 		emitByte(0xc0 + pcfg.readReg0);
 		emit(REX_XOR_RAX_R64);
@@ -364,9 +395,21 @@ namespace randomx {
 		emitByte(0xc0 + pcfg.readReg2);
 		emit(REX_XOR_EAX);
 		emitByte(0xc0 + pcfg.readReg3);
+#endif
 	}
 
 	void JitCompilerRiscv::generateProgramEpilogue(Program& prog) {
+#if 1 //TMP
+
+	// TODO:保存数据
+	// TODO:条件跳转到循环开始
+	
+	printf("[%s][%d]epilogueOffset:0x%x\n",__func__,__LINE__,epilogueOffset);
+	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
+	uint32_t v;
+	v = mk_J(RISCVOP_JAL,RISCV_R_ZERO,epilogueOffset - codePos);
+	emit32(v);
+#else
 		memcpy(code + codePos, codeLoopStore, loopStoreSize);
 		codePos += loopStoreSize;
 		emit(SUB_EBX);
@@ -374,6 +417,7 @@ namespace randomx {
 		emit32(prologueSize - codePos - 4);
 		emitByte(JMP);
 		emit32(epilogueOffset - codePos - 4);
+#endif
 	}
 
 	void JitCompilerRiscv::generateCode(Instruction& instr, int i) {

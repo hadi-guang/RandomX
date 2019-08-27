@@ -116,7 +116,7 @@ namespace randomx {
 	class JitCompilerA64;
 	using JitCompiler = JitCompilerA64;
 #elif defined(__riscv)
-	#define RANDOMX_HAVE_COMPILER 0
+	#define RANDOMX_HAVE_COMPILER 1
 	class JitCompilerRiscv;
 	using JitCompiler = JitCompilerRiscv;
 #else

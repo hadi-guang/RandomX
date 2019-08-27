@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "program.hpp"
 #include "reciprocal.h"
 #include "virtual_memory.hpp"
-
+#include "zlog.h"
 namespace randomx {
 	/*
 
@@ -212,19 +212,26 @@ namespace randomx {
 
 	void JitCompilerX86::generateProgram(Program& prog, ProgramConfiguration& pcfg) {
 		generateProgramPrologue(prog, pcfg);
+#if 0
 		memcpy(code + codePos, codeReadDataset, readDatasetSize);
 		codePos += readDatasetSize;
+#endif
 		generateProgramEpilogue(prog);
 	}
 
 	void JitCompilerX86::generateProgramLight(Program& prog, ProgramConfiguration& pcfg, uint32_t datasetOffset) {
+		printf("[%s][%d] eMask[0]0x%x eMask[1]0x%x\n",__func__,__LINE__,pcfg.eMask[0],pcfg.eMask[1]);
+		printf("[%s][%d]readReg0:0x%xreadReg1:0x%xreadReg2:0x%xreadReg3:0x%x\n",__func__,__LINE__,pcfg.readReg0,pcfg.readReg1,pcfg.readReg2,pcfg.readReg3);
 		generateProgramPrologue(prog, pcfg);
+#if 0
+
 		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize);
 		emit(ADD_EBX_I);
 		emit32(datasetOffset / CacheLineSize);
 		emitByte(CALL);
 		emit32(superScalarHashOffset - (codePos + 4));
 		emit(codeReadDatasetLightSshFin, readDatasetLightFinSize);
+#endif
 		generateProgramEpilogue(prog);
 	}
 
@@ -271,6 +278,8 @@ namespace randomx {
 		}
 		codePos = prologueSize;
 		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
+		printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
+#if 0
 		emit(REX_XOR_RAX_R64);
 		emitByte(0xc0 + pcfg.readReg0);
 		emit(REX_XOR_RAX_R64);
@@ -287,14 +296,17 @@ namespace randomx {
 		emitByte(0xc0 + pcfg.readReg2);
 		emit(REX_XOR_EAX);
 		emitByte(0xc0 + pcfg.readReg3);
+#endif
 	}
 
 	void JitCompilerX86::generateProgramEpilogue(Program& prog) {
+#if 0
 		memcpy(code + codePos, codeLoopStore, loopStoreSize);
 		codePos += loopStoreSize;
 		emit(SUB_EBX);
 		emit(JNZ);
 		emit32(prologueSize - codePos - 4);
+#endif
 		emitByte(JMP);
 		emit32(epilogueOffset - codePos - 4);
 	}

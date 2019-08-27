@@ -65,15 +65,12 @@
 
 .balign 64
 DECL(randomx_program_prologue):
-#if defined(WINABI)
-#	#include "asm/program_prologue_win64.inc"
-#else
-#	#include "asm/program_prologue_linux.inc"
-#endif
+	#include "riscv/program_prologue.inc"
+
 #	movapd xmm13, xmmword ptr mantissaMask[rip]
 #	movapd xmm14, xmmword ptr exp240[rip]
 #	movapd xmm15, xmmword ptr scaleMask[rip]
-#	jmp DECL(randomx_program_loop_begin)
+	j DECL(randomx_program_loop_begin)
 
 .balign 64
 #	#include "asm/program_xmm_constants.inc"
@@ -158,12 +155,7 @@ call_offset:
 
 .balign 64
 DECL(randomx_program_epilogue):
-#	#include "asm/program_epilogue_store.inc"
-#if defined(WINABI)
-#	#include "asm/program_epilogue_win64.inc"
-#else
-#	#include "asm/program_epilogue_linux.inc"
-#endif
+	#include "riscv/program_epilogue.inc"
 
 .balign 64
 DECL(randomx_sshash_load):
