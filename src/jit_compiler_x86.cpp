@@ -304,7 +304,7 @@ namespace randomx {
 	void JitCompilerX86::generateProgramEpilogue(Program& prog) {
 		memcpy(code + codePos, codeLoopStore, loopStoreSize);
 		codePos += loopStoreSize;
-#if 0
+#if 1
 		emit(SUB_EBX);
 		emit(JNZ);
 		emit32(prologueSize - codePos - 4);

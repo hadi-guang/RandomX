@@ -99,7 +99,7 @@ DECL(randomx_program_read_dataset_sshash_fin):
 #	#include "asm/program_read_dataset_sshash_fin.inc"
 
 DECL(randomx_program_loop_store):
-#	#include "asm/program_loop_store.inc"
+	#include "riscv/program_loop_store.inc"
 
 DECL(randomx_program_loop_end):
 	nop

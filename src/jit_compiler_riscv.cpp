@@ -479,6 +479,7 @@ enum
 		codePos += loopLoadSize;
 #endif
 #if 1 //randomx
+	//TODO
 #else
 		for (unsigned i = 0; i < prog.getSize(); ++i) {
 			Instruction& instr = prog(i);
@@ -488,6 +489,7 @@ enum
 		}
 #endif
 #if 1 //randomx
+		//TODO
 #else
 		emit(REX_MOV_RR);
 		emitByte(0xc0 + pcfg.readReg2);
@@ -498,14 +500,22 @@ enum
 
 	void JitCompilerRiscv::generateProgramEpilogue(Program& prog) {
 	uint32_t v;
-#if 1 //TMP
-
-	// TODO:save data 
-	// TODO:jump to loop begin
-	
+#if 1 //randomx
 	printf("[%s][%d]epilogueOffset:0x%x\n",__func__,__LINE__,epilogueOffset);
 	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
-	//jump to epilogue
+	memcpy(code + codePos, codeLoopStore, loopStoreSize);
+	codePos += loopStoreSize;
+	// sub program_iterations (t3)
+	v = mk_I(RISCVOP_IMM,RISCVFUNC3_IMM_I_ADDI, RISCV_R_T3, RISCV_R_T3,-1);
+	emit32(v);
+	// jump exit
+	v = mk_B(RISCVOP_BRANCH,RISCVFUNC3_BRANCH_B_BEQ,RISCV_R_T3,RISCV_R_ZERO,8);
+	emit32(v);
+	// jump to prologue
+	v = mk_J(RISCVOP_JAL,RISCV_R_ZERO,prologueSize - codePos);
+	emit32(v);
+	// exit:
+	// jump to epilogue
 	v = mk_J(RISCVOP_JAL,RISCV_R_ZERO,epilogueOffset - codePos);
 	emit32(v);
 #else

@@ -51,6 +51,7 @@ namespace randomx {
 	template<class Allocator, bool softAes>
 	void CompiledVm<Allocator, softAes>::execute() {
 		printf("ma:%d mx:%d\n",mem.ma,mem.mx);
+		printf("RANDOMX_PROGRAM_ITERATIONS:%d\n",RANDOMX_PROGRAM_ITERATIONS);
 		compiler.getProgramFunc()(reg, mem, scratchpad, RANDOMX_PROGRAM_ITERATIONS);
 		printf("scratchpad:%p\n",scratchpad);
 		p_hex("reg\n",&reg,sizeof(reg));

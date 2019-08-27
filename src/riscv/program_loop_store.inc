@@ -1,5 +1,7 @@
-	xor eax, eax
-	pop rcx
+#  clean spAddr0 spAddr1
+	mv	t4,	zero
+
+#	pop rcx
 #	mov qword ptr [rcx+0], r8
 #	mov qword ptr [rcx+8], r9
 #	mov qword ptr [rcx+16], r10
@@ -8,7 +10,7 @@
 #	mov qword ptr [rcx+40], r13
 #	mov qword ptr [rcx+48], r14
 #	mov qword ptr [rcx+56], r15
-	pop rcx
+#	pop rcx
 #	xorpd xmm0, xmm4
 #	xorpd xmm1, xmm5
 #	xorpd xmm2, xmm6
