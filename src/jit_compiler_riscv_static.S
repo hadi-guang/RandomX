@@ -46,6 +46,8 @@
 .global DECL(randomx_program_read_dataset_sshash_fin)
 .global DECL(randomx_program_loop_store)
 .global DECL(randomx_program_loop_end)
+.global DECL(randomx_program_loop_store_last)
+.global DECL(randomx_program_loop_end_last)
 .global DECL(randomx_dataset_init)
 .global DECL(randomx_program_epilogue)
 .global DECL(randomx_sshash_load)
@@ -102,6 +104,12 @@ DECL(randomx_program_loop_store):
 	#include "riscv/program_loop_store.inc"
 
 DECL(randomx_program_loop_end):
+	nop
+
+DECL(randomx_program_loop_store_last):
+	#include "riscv/program_loop_store_last.inc"
+
+DECL(randomx_program_loop_end_last):
 	nop
 
 .balign 64

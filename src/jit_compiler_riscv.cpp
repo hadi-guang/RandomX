@@ -49,6 +49,8 @@ namespace randomx {
 	const uint8_t* codeDatasetInit = (uint8_t*)&randomx_dataset_init;
 	const uint8_t* codeLoopStore = (uint8_t*)&randomx_program_loop_store;
 	const uint8_t* codeLoopEnd = (uint8_t*)&randomx_program_loop_end;
+	const uint8_t* codeLoopStoreLast = (uint8_t*)&randomx_program_loop_store_last;
+	const uint8_t* codeLoopEndLast = (uint8_t*)&randomx_program_loop_end_last;
 	const uint8_t* codeEpilogue = (uint8_t*)&randomx_program_epilogue;
 	const uint8_t* codeProgramEnd = (uint8_t*)&randomx_program_end;
 	const uint8_t* codeShhLoad = (uint8_t*)&randomx_sshash_load;
@@ -62,6 +64,7 @@ namespace randomx {
 	const int32_t readDatasetLightInitSize = codeReadDatasetLightSshFin - codeReadDatasetLightSshInit;
 	const int32_t readDatasetLightFinSize = codeLoopStore - codeReadDatasetLightSshFin;
 	const int32_t loopStoreSize = codeLoopEnd - codeLoopStore;
+	const int32_t loopStoreLastSize = codeLoopEndLast - codeLoopStoreLast;
 	const int32_t datasetInitSize = codeEpilogue - codeDatasetInit;
 	const int32_t epilogueSize = codeShhLoad - codeEpilogue;
 	const int32_t codeSshLoadSize = codeShhPrefetch - codeShhLoad;
@@ -503,18 +506,25 @@ enum
 #if 1 //randomx
 	printf("[%s][%d]epilogueOffset:0x%x\n",__func__,__LINE__,epilogueOffset);
 	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
-	memcpy(code + codePos, codeLoopStore, loopStoreSize);
-	codePos += loopStoreSize;
+
 	// sub program_iterations (t3)
 	v = mk_I(RISCVOP_IMM,RISCVFUNC3_IMM_I_ADDI, RISCV_R_T3, RISCV_R_T3,-1);
 	emit32(v);
+
 	// if (program_iterations == zero) jump exit
-	v = mk_B(RISCVOP_BRANCH,RISCVFUNC3_BRANCH_B_BEQ,RISCV_R_T3,RISCV_R_ZERO,8);
+	v = mk_B(RISCVOP_BRANCH,RISCVFUNC3_BRANCH_B_BEQ,RISCV_R_T3,RISCV_R_ZERO,4+loopStoreSize+4);
 	emit32(v);
+	memcpy(code + codePos, codeLoopStore, loopStoreSize);
+	codePos += loopStoreSize;
+
 	// jump to prologue
 	v = mk_J(RISCVOP_JAL,RISCV_R_ZERO,prologueSize - codePos);
 	emit32(v);
+
 	// exit:
+	memcpy(code + codePos, codeLoopStoreLast, loopStoreLastSize);
+	codePos += loopStoreLastSize;
+	
 	// jump to epilogue
 	v = mk_J(RISCVOP_JAL,RISCV_R_ZERO,epilogueOffset - codePos);
 	emit32(v);
