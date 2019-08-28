@@ -508,7 +508,7 @@ enum
 	// sub program_iterations (t3)
 	v = mk_I(RISCVOP_IMM,RISCVFUNC3_IMM_I_ADDI, RISCV_R_T3, RISCV_R_T3,-1);
 	emit32(v);
-	// jump exit
+	// if (program_iterations == zero) jump exit
 	v = mk_B(RISCVOP_BRANCH,RISCVFUNC3_BRANCH_B_BEQ,RISCV_R_T3,RISCV_R_ZERO,8);
 	emit32(v);
 	// jump to prologue

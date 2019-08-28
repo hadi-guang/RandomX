@@ -58,5 +58,6 @@
 	ld		s7,	0x90(sp)
 	ld		s8,	0x98(sp)
 	ld		s9,	0xA0(sp)
-	addi	sp,	sp,	168
+	ld		s10,0xA8(sp)
+	addi	sp,	sp,	176
 	ret

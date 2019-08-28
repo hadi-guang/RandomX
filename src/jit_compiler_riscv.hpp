@@ -57,7 +57,7 @@ namespace randomx {
 	; s7  -> E 'or' mask low=	0x3*00000000******	need save
 	; s8  -> E 'or' mask high=	0x3*00000000******	need save
 	; s9  -> scale mask   =		0x81f0000000000000	need save
-	; s10 ->
+	; s10 -> TMP3		need save
 	; s11 ->
 	
 	; a0  -> "r0"

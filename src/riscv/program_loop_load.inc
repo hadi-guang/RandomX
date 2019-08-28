@@ -3,11 +3,11 @@
 # calc offset of scratchpad
 	and	t4,	t4,	t5
 	
-# get spAddr0 -> s4
+# get spAddr0 -> s5
 	addw	s5,zero,t4
 	add		s4,	t2,s5
 
-## load randomx r0-r7
+## load randomx r0-r7 from scratchpad
 	ld		s5,	0(s4)
 	xor		a0,a0,s5
 	ld		s5,	8(s4)
@@ -25,7 +25,7 @@
 	ld		s5,	56(s4)
 	xor		a7,a7,s5
 
-# get spAddr1 -> s4
+# get spAddr1 -> s5
 	srli	s5,	t4,32
 	add		s4,	t2,s5
 
