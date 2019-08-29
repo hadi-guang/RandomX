@@ -237,7 +237,7 @@ namespace randomx {
 		RISCVFUNC3_BRANCH_B_BLTU= 0b110,
 		RISCVFUNC3_BRANCH_B_BGEU= 0b111,
 		
-	}RISVFUNC3;
+	}RISCVFUNC3;
 	typedef enum
 	{
 		RISCVFUNC7_OP_R_ADD		= 0b0000000,
@@ -254,7 +254,7 @@ namespace randomx {
 		RISCVFUNC7_IMM_R_SLLI	= 0b0000000,
 		RISCVFUNC7_IMM_R_SRLI	= 0b0000000,
 		RISCVFUNC7_IMM_R_SRAI	= 0b0100000,
-	}RISVFUNC7;
+	}RISCVFUNC7;
 
 
 	uint32_t mk_J(RISCVOP op_code,uint8_t rd,uint32_t imm_21);

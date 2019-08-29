@@ -257,7 +257,7 @@ enum
 			uint16_t data;
 		}riscv_c_t;
 
-		uint32_t mk_R(RISCVOP op_code,RISVFUNC3 funct3,uint8_t funct7,uint8_t rd,uint8_t rs1,uint8_t rs2)
+		uint32_t mk_R(RISCVOP op_code,RISCVFUNC3 funct3,RISCVFUNC7 funct7,uint8_t rd,uint8_t rs1,uint8_t rs2)
 		{
 			riscv_t t;
 			t.R.op_code = op_code;
@@ -268,7 +268,7 @@ enum
 			t.R.funct7	= funct7;
 			return t.data;
 		}
-		uint32_t mk_I(RISCVOP op_code,RISVFUNC3 funct3,uint8_t rd,uint8_t rs1,uint32_t imm_12)
+		uint32_t mk_I(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rd,uint8_t rs1,uint32_t imm_12)
 		{
 			riscv_t t;
 			t.I.op_code = op_code;
@@ -278,7 +278,7 @@ enum
 			t.I.imm_11_0= imm_12;
 			return t.data;
 		}
-		uint32_t mk_S(RISCVOP op_code,RISVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_12)
+		uint32_t mk_S(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_12)
 		{
 			riscv_t t;
 			t.S.op_code = op_code;
@@ -289,7 +289,7 @@ enum
 			t.S.imm_11_5	= (imm_12 & 0b000000000111111100000) >> 5;
 			return t.data;
 		}
-		uint32_t mk_B(RISCVOP op_code,RISVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_13)
+		uint32_t mk_B(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_13)
 		{
 			riscv_t t;
 			t.B.op_code = op_code;
@@ -456,7 +456,7 @@ enum
 		{
 			rs1 = RISCV_R_A1;
 		}
-		v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_XOR,0,RISCV_R_T4,RISCV_R_T4,rs1);
+		v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_XOR,RISCVFUNC7_OP_R_XOR,RISCV_R_T4,RISCV_R_T4,rs1);
 		emit32(v);
 		if (pcfg.readReg1 == 2)
 		{
@@ -466,7 +466,7 @@ enum
 		{
 			rs2 = RISCV_R_A3;
 		}
-		v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_XOR,0,RISCV_R_T4,RISCV_R_T4,rs2);
+		v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_XOR,RISCVFUNC7_OP_R_XOR,RISCV_R_T4,RISCV_R_T4,rs2);
 		emit32(v);
 
 		//	spAddr0 &= ScratchpadL3Mask64;
