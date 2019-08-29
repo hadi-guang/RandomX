@@ -481,16 +481,12 @@ enum
 		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
 		codePos += loopLoadSize;
 #endif
-#if 1 //randomx
-	//TODO
-#else
 		for (unsigned i = 0; i < prog.getSize(); ++i) {
 			Instruction& instr = prog(i);
 			instr.src %= RegistersCount;
 			instr.dst %= RegistersCount;
 			generateCode(instr, i);
 		}
-#endif
 #if 1 //randomx
 		//TODO
 #else
@@ -705,15 +701,30 @@ enum
 	}
 
 	void JitCompilerRiscv::h_ISUB_R(Instruction& instr, int i) {
+		uint32_t v;
+		uint32_t val;
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
-			emit(REX_SUB_RR);
-			emitByte(0xc0 + 8 * instr.dst + instr.src);
+			v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_SUB,RISCVFUNC7_OP_R_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.src);
+			emit32(v);
 		}
 		else {
-			emit(REX_81);
-			emitByte(0xe8 + instr.dst);
-			emit32(instr.getImm32());
+			val = instr.getImm32();
+			if (val & 0b100000000000)
+			{
+				v = mk_U(RISCVOP_LUI,RISCV_R_S4, (val >> 12) + 1);
+			}
+			else
+			{
+				v = mk_U(RISCVOP_LUI,RISCV_R_S4, val >> 12);
+			}
+			emit32(v);
+			v = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, val & 0b111111111111);
+			emit32(v);
+			printf("v: 0x%x\n",v);
+			
+			v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_SUB,RISCVFUNC7_OP_R_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_S4);
+			emit32(v);
 		}
 	}
 
@@ -1006,7 +1017,7 @@ enum
 	}
 
 	void JitCompilerRiscv::h_NOP(Instruction& instr, int i) {
-		emit(NOP1);
+	//	emit(NOP1);
 	}
 
 #include "instruction_weights.hpp"

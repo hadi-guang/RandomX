@@ -287,13 +287,14 @@ namespace randomx {
 
 		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
 		codePos += loopLoadSize;
-#if 0
+
 		for (unsigned i = 0; i < prog.getSize(); ++i) {
 			Instruction& instr = prog(i);
 			instr.src %= RegistersCount;
 			instr.dst %= RegistersCount;
 			generateCode(instr, i);
 		}
+#if 0
 		emit(REX_MOV_RR);
 		emitByte(0xc0 + pcfg.readReg2);
 		emit(REX_XOR_EAX);
