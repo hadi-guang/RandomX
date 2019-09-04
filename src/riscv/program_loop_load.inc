@@ -75,38 +75,38 @@
 ## mask e0-e3
 # el0 eh0
 	fmv.x.d		s5,ft0
-	and			s5,s5,s6
-	or			s5,s5,s7
+	and			s5,s5,s8
+	or			s5,s5,s9
 	fmv.d.x		ft0,s5
 	fmv.x.d		s5,ft4
-	and			s5,s5,s6
-	or			s5,s5,s8
+	and			s5,s5,s8
+	or			s5,s5,s10
 	fmv.d.x		ft4,s5
 # el1 eh1
 	fmv.x.d		s5,ft1
-	and			s5,s5,s6
-	or			s5,s5,s7
+	and			s5,s5,s8
+	or			s5,s5,s9
 	fmv.d.x		ft1,s5
 	fmv.x.d		s5,ft5
-	and			s5,s5,s6
-	or			s5,s5,s8
+	and			s5,s5,s8
+	or			s5,s5,s10
 	fmv.d.x		ft5,s5
 # el2 eh2
 	fmv.x.d		s5,ft2
-	and			s5,s5,s6
-	or			s5,s5,s7
+	and			s5,s5,s8
+	or			s5,s5,s9
 	fmv.d.x		ft2,s5
 	fmv.x.d		s5,ft6
-	and			s5,s5,s6
-	or			s5,s5,s8
+	and			s5,s5,s8
+	or			s5,s5,s10
 	fmv.d.x		ft6,s5
 # el3 eh3
 	fmv.x.d		s5,ft3
-	and			s5,s5,s6
-	or			s5,s5,s7
+	and			s5,s5,s8
+	or			s5,s5,s9
 	fmv.d.x		ft3,s5
 	fmv.x.d		s5,ft7
-	and			s5,s5,s6
-	or			s5,s5,s8
+	and			s5,s5,s8
+	or			s5,s5,s10
 	fmv.d.x		ft7,s5
 

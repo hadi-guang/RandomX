@@ -38,8 +38,11 @@ namespace randomx {
 	/*
 
 	REGISTER ALLOCATION:
+	; zero-> 
 	; ra  -> return address
 	; sp  -> stack pointer
+	; gp
+	; tp
 	
 	; t0  -> regfile
 	; t1  -> memory registers "ma" (high 32 bits), "mx" (low 32 bits)
@@ -48,17 +51,19 @@ namespace randomx {
 	; t4  -> registers	"spAddr1" (high 32 bits), "spAddr0" (low 32 bits)
 	; t5  -> RANDOMX_SCRATCHPAD_MASK << 32 + RANDOMX_SCRATCHPAD_MASK
 	; t6  -> dataset pointer
-	; s1  -> L1M		need save
-	; s2  -> L2M		need save
-	; s3  -> L3M		need save
-	; s4  -> TMP1		need save
-	; s5  -> TMP2		need save
-	; s6  -> E 'and' mask  =	0x00ffffffffffffff	need save
-	; s7  -> E 'or' mask low=	0x3*00000000******	need save
-	; s8  -> E 'or' mask high=	0x3*00000000******	need save
-	; s9  -> scale mask   =		0x81f0000000000000	need save
-	; s10 -> TMP3		need save
-	; s11 ->
+
+	; s0	TMP0									need save
+	; s1  -> L1M									need save
+	; s2  -> L2M									need save
+	; s3  -> L3M									need save
+	; s4  -> TMP1									need save
+	; s5  -> TMP2									need save
+	; s6  -> 	need save
+	; s7  -> 	need save
+	; s8  -> E 'and' mask  =	0x00ffffffffffffff	need save
+	; s9  -> E 'or' mask low=	0x3*00000000******	need save
+	; s10 -> E 'or' mask high=	0x3*00000000******	need save
+	; s11 -> scale mask = 0x81f0000000000000		need save
 	
 	; a0  -> "r0"
 	; a1  -> "r1"
@@ -68,7 +73,6 @@ namespace randomx {
 	; a5  -> "r5"
 	; a6  -> "r6"
 	; a7  -> "r7"
-
 
 	; fa0 -> "fl0"
 	; fa1 -> "fl1"
@@ -101,10 +105,10 @@ namespace randomx {
 	; ft9  ->
 	; ft10 ->
 	; ft11 ->
-	; fs8  ->
-	; fs9  ->
-	; fs10 ->
-	; fs11 ->
+	; fs8  ->			need save
+	; fs9  ->			need save
+	; fs10 ->			need save
+	; fs11 ->			need save
 	/////////////////////////////////////////////////////////////////////////////////////
 	// x86
 	; rax -> temporary
@@ -150,26 +154,26 @@ namespace randomx {
 #define	RISCV_R_T0		(5)		//	regfile
 #define	RISCV_R_T1		(6)		//memory registers "ma" (high 32 bits), "mx" (low 32 bits)
 #define	RISCV_R_T2		(7)		//scratchpad pointer
-#define	RISCV_R_S0		(8)		
-#define	RISCV_R_S1		(9)		//L1M
-#define	RISCV_R_A0		(10)	//r0 - r7
-#define	RISCV_R_A1		(11)	//r0 - r7
-#define	RISCV_R_A2		(12)	//r0 - r7
-#define	RISCV_R_A3		(13)	//r0 - r7
-#define	RISCV_R_A4		(14)	//r0 - r7
-#define	RISCV_R_A5		(15)	//r0 - r7
-#define	RISCV_R_A6		(16)	//r0 - r7
-#define	RISCV_R_A7		(17)	//r0 - r7
-#define	RISCV_R_S2		(18)	//L2M
-#define	RISCV_R_S3		(19)	//L3M
-#define	RISCV_R_S4		(20)
-#define	RISCV_R_S5		(21)
+#define	RISCV_R_S0		(8)		// TMP0
+#define	RISCV_R_S1		(9)		// L1M
+#define	RISCV_R_A0		(10)	// r0 - r7
+#define	RISCV_R_A1		(11)	// r0 - r7
+#define	RISCV_R_A2		(12)	// r0 - r7
+#define	RISCV_R_A3		(13)	// r0 - r7
+#define	RISCV_R_A4		(14)	// r0 - r7
+#define	RISCV_R_A5		(15)	// r0 - r7
+#define	RISCV_R_A6		(16)	// r0 - r7
+#define	RISCV_R_A7		(17)	// r0 - r7
+#define	RISCV_R_S2		(18)	// L2M
+#define	RISCV_R_S3		(19)	// L3M
+#define	RISCV_R_S4		(20)	// TMP1
+#define	RISCV_R_S5		(21)	// TMP2
 #define	RISCV_R_S6		(22)
 #define	RISCV_R_S7		(23)
-#define	RISCV_R_S8		(24)
-#define	RISCV_R_S9		(25)
-#define	RISCV_R_S10		(26)
-#define	RISCV_R_S11		(27)
+#define	RISCV_R_S8		(24)	// E 'and' mask
+#define	RISCV_R_S9		(25)	// E 'or' mask low
+#define	RISCV_R_S10		(26)	// E 'or' mask high
+#define	RISCV_R_S11		(27)	// scale mask
 #define	RISCV_R_T3		(28)	//program_iterations
 #define	RISCV_R_T4		(29)	
 #define	RISCV_R_T5		(30)	
@@ -226,9 +230,9 @@ namespace randomx {
 		RISCVFUNC3_IMM_I_XORI	= 0b100,
 		RISCVFUNC3_IMM_I_ORI	= 0b110,
 		RISCVFUNC3_IMM_I_ANDI	= 0b111,
-		RISCVFUNC3_IMM_R_SLLI	= 0b001,
-		RISCVFUNC3_IMM_R_SRLI	= 0b101,
-		RISCVFUNC3_IMM_R_SRAI	= 0b101,
+		RISCVFUNC3_IMM_I_SLLI	= 0b001,
+		RISCVFUNC3_IMM_I_SRLI	= 0b101,
+		RISCVFUNC3_IMM_I_SRAI	= 0b101,
 
 		RISCVFUNC3_BRANCH_B_BEQ	= 0b000,
 		RISCVFUNC3_BRANCH_B_BNE	= 0b001,
@@ -251,9 +255,9 @@ namespace randomx {
 		RISCVFUNC7_OP_R_OR		= 0b0000000,
 		RISCVFUNC7_OP_R_AND		= 0b0000000,
 
-		RISCVFUNC7_IMM_R_SLLI	= 0b0000000,
-		RISCVFUNC7_IMM_R_SRLI	= 0b0000000,
-		RISCVFUNC7_IMM_R_SRAI	= 0b0100000,
+		RISCVFUNC7_IMM_I_SLLI	= 0b0000000,
+		RISCVFUNC7_IMM_I_SRLI	= 0b0000000,
+		RISCVFUNC7_IMM_I_SRAI	= 0b0100000,
 	}RISCVFUNC7;
 
 

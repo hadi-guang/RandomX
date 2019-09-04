@@ -68,14 +68,14 @@
 .balign 64
 DECL(randomx_program_prologue):
 	#include "riscv/program_prologue.inc"
-# load s6-s9
+# load const
 curip:
 	auipc	s4, %pcrel_hi(mantissaMask)
 	addi	s4, s4, %pcrel_lo(curip)
-	ld s6,		(0x00)(s4)	# load E 'and' mask
-	ld s7,		0x10(s4)	# load E 'or' mask lo
-	ld s8,		0x18(s4)	# load E 'or' mask hi
-	ld s9,		0x20(s4)	# load scale mask
+	ld s8,		(0x00)(s4)	# load E 'and' mask
+	ld s9,		0x10(s4)	# load E 'or' mask lo
+	ld s10,		0x18(s4)	# load E 'or' mask hi
+	ld s11,		0x20(s4)	# load scale mask
 	j DECL(randomx_program_loop_begin)
 
 .balign 64

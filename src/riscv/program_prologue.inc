@@ -1,5 +1,5 @@
 ;#	save callee-saved registers fs0-fs11 s1-s3
-	addi	sp,	sp,	-176
+	addi	sp,	sp,	-184
 	fsd	fs0,	0x00(sp)
 	fsd	fs1,	0x08(sp)
 	fsd	fs2,	0x10(sp)
@@ -12,6 +12,7 @@
 #	fsd	fs9,	0x48(sp)
 #	fsd	fs10,	0x50(sp)
 #	fsd	fs11,	0x58(sp)
+	sd	s0,	0x40(sp)
 	sd	s1,	0x60(sp)
 	sd	s2,	0x68(sp)
 	sd	s3,	0x70(sp)
@@ -22,7 +23,8 @@
 	sd	s7,	0x90(sp)
 	sd	s8,	0x98(sp)
 	sd	s9,	0xA0(sp)
-	sd	s10,0xA8(sp)
+	sd	s10,	0xA8(sp)
+	sd	s11,	0xB0(sp)
 
 ;#	function arguments
 	mv	t0,	a0	;# regfile

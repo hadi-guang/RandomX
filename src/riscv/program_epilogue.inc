@@ -45,10 +45,13 @@
 	fld		fs5,	0x28(sp)
 	fld		fs6,	0x30(sp)
 	fld		fs7,	0x38(sp)
+
 #	fld		fs8,	0x40(sp)
 #	fld		fs9,	0x48(sp)
 #	fld		fs10,	0x50(sp)
 #	fld		fs11,	0x58(sp)
+
+	ld		s0,	0x40(sp)
 	ld		s1,	0x60(sp)
 	ld		s2,	0x68(sp)
 	ld		s3,	0x70(sp)
@@ -58,6 +61,7 @@
 	ld		s7,	0x90(sp)
 	ld		s8,	0x98(sp)
 	ld		s9,	0xA0(sp)
-	ld		s10,0xA8(sp)
-	addi	sp,	sp,	176
+	ld		s10,	0xA8(sp)
+	ld		s11,	0xB0(sp)
+	addi	sp,	sp,	184
 	ret
