@@ -909,12 +909,9 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_IMULH_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		emit(REX_MOV_RR64);
-		emitByte(0xc0 + instr.dst);
-		emit(REX_MUL_R);
-		emitByte(0xe0 + instr.src);
-		emit(REX_MOV_R64R);
-		emitByte(0xc2 + 8 * instr.dst);
+		// mul
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MULHU, RISCVFUNC7_OP_R_MULHU, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_IMULH_M(Instruction& instr, int i) {
