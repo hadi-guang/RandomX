@@ -83,10 +83,10 @@ namespace randomx {
 
 			executeBytecode(bytecode, scratchpad, config);
 
-			mem.mx ^= nreg.r[config.readReg2] ^ nreg.r[config.readReg3];
-			mem.mx &= CacheLineAlignMask;
-			datasetPrefetch(datasetOffset + mem.mx);
-			datasetRead(datasetOffset + mem.ma, nreg.r);
+//			mem.mx ^= nreg.r[config.readReg2] ^ nreg.r[config.readReg3];
+//			mem.mx &= CacheLineAlignMask;
+//			datasetPrefetch(datasetOffset + mem.mx);
+//			datasetRead(datasetOffset + mem.ma, nreg.r);
 			std::swap(mem.mx, mem.ma);
 
 			for (unsigned i = 0; i < RegistersCount; ++i)
