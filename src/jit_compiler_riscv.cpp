@@ -162,181 +162,197 @@ namespace randomx {
 
 	static const uint8_t* NOPX[] = { NOP1, NOP2, NOP3, NOP4, NOP5, NOP6, NOP7, NOP8 };
 
-enum
-{
-//	RISVOPC_J	= 
-}RISVOPC;
+	enum
+	{
+	//	RISVOPC_J	= 
+	}RISVOPC;
 
-		typedef union riscv_t
+	typedef union riscv_t
+	{
+		struct
 		{
-			struct
-			{
-				uint32_t op_code:7;
-				uint32_t rd:5;
-				uint32_t funct3:3;
-				uint32_t rs1:5;
-				uint32_t rs2:5;
-				uint32_t funct7:7;
-			}R;
-			struct
-			{
-				uint32_t op_code:7;
-				uint32_t rd:5;
-				uint32_t funct3:3;
-				uint32_t rs1:5;
-				uint32_t imm_11_0:12;
-			}I;
-			struct
-			{
-				uint32_t op_code:7;
-				uint32_t imm_4_0:5;
-				uint32_t funct3:3;
-				uint32_t rs1:5;
-				uint32_t rs2:5;
-				uint32_t imm_11_5:7;
-			}S;
-			struct
-			{
-				uint32_t op_code:7;
-				uint32_t imm_11:1;
-				uint32_t imm_4_1:4;
-				uint32_t funct3:3;
-				uint32_t rs1:5;
-				uint32_t rs2:5;
-				uint32_t imm_10_5:6;
-				uint32_t imm_12:1;
-			}B;
-			struct
-			{
-				uint32_t op_code:7;
-				uint32_t rd:5;
-				uint32_t imm_31_12:20;
-			}U;
-			struct
-			{
-				uint32_t op_code:7;
-				uint32_t rd:5;
-				uint32_t imm_19_12:8;
-				uint32_t imm_11:1;
-				uint32_t imm_10_1:10;
-				uint32_t imm_20:1;
-			}J;
-			uint32_t data;
-		}riscv_t;
-		typedef union riscv_c_t
+			uint32_t op_code:7;
+			uint32_t rd:5;
+			uint32_t funct3:3;
+			uint32_t rs1:5;
+			uint32_t rs2:5;
+			uint32_t funct7:7;
+		}R;
+		struct
 		{
-			struct
-			{}CR;
-			struct
-			{}CI;
-			struct
-			{}CSS;
-			struct
-			{}CIW;
-			struct
-			{}CL;
-			struct
-			{}CS;
-			struct
-			{}CA;
-			struct
-			{}CB;
-			struct
-			{
-				uint16_t op:2;
-				uint16_t imm5:1;
-				uint16_t imm3_1:3;
-				uint16_t imm7:1;
-				uint16_t imm6:1;
-				uint16_t imm10:1;
-				uint16_t imm9_8:2;
-				uint16_t imm4:1;
-				uint16_t imm11:1;
-				uint16_t funct3:3;
-			}CJ;
-			uint16_t data;
-		}riscv_c_t;
+			uint32_t op_code:7;
+			uint32_t rd:5;
+			uint32_t funct3:3;
+			uint32_t rs1:5;
+			uint32_t imm_11_0:12;
+		}I;
+		struct
+		{
+			uint32_t op_code:7;
+			uint32_t imm_4_0:5;
+			uint32_t funct3:3;
+			uint32_t rs1:5;
+			uint32_t rs2:5;
+			uint32_t imm_11_5:7;
+		}S;
+		struct
+		{
+			uint32_t op_code:7;
+			uint32_t imm_11:1;
+			uint32_t imm_4_1:4;
+			uint32_t funct3:3;
+			uint32_t rs1:5;
+			uint32_t rs2:5;
+			uint32_t imm_10_5:6;
+			uint32_t imm_12:1;
+		}B;
+		struct
+		{
+			uint32_t op_code:7;
+			uint32_t rd:5;
+			uint32_t imm_31_12:20;
+		}U;
+		struct
+		{
+			uint32_t op_code:7;
+			uint32_t rd:5;
+			uint32_t imm_19_12:8;
+			uint32_t imm_11:1;
+			uint32_t imm_10_1:10;
+			uint32_t imm_20:1;
+		}J;
+		uint32_t data;
+	}riscv_t;
+	typedef union riscv_c_t
+	{
+		struct
+		{}CR;
+		struct
+		{}CI;
+		struct
+		{}CSS;
+		struct
+		{}CIW;
+		struct
+		{}CL;
+		struct
+		{}CS;
+		struct
+		{}CA;
+		struct
+		{}CB;
+		struct
+		{
+			uint16_t op:2;
+			uint16_t imm5:1;
+			uint16_t imm3_1:3;
+			uint16_t imm7:1;
+			uint16_t imm6:1;
+			uint16_t imm10:1;
+			uint16_t imm9_8:2;
+			uint16_t imm4:1;
+			uint16_t imm11:1;
+			uint16_t funct3:3;
+		}CJ;
+		uint16_t data;
+	}riscv_c_t;
 
-		uint32_t mk_R(RISCVOP op_code,RISCVFUNC3 funct3,RISCVFUNC7 funct7,uint8_t rd,uint8_t rs1,uint8_t rs2)
+	uint32_t mk_R(RISCVOP op_code,RISCVFUNC3 funct3,RISCVFUNC7 funct7,uint8_t rd,uint8_t rs1,uint8_t rs2)
+	{
+		riscv_t t;
+		t.R.op_code = op_code;
+		t.R.rd		= rd;
+		t.R.funct3	= funct3;
+		t.R.rs1		= rs1;
+		t.R.rs2		= rs2;
+		t.R.funct7	= funct7;
+		return t.data;
+	}
+	uint32_t mk_I(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rd,uint8_t rs1,uint32_t imm_12)
+	{
+		riscv_t t;
+		t.I.op_code = op_code;
+		t.I.rd		= rd;
+		t.I.funct3	= funct3;
+		t.I.rs1		= rs1;
+		t.I.imm_11_0= imm_12;
+		return t.data;
+	}
+	uint32_t mk_S(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_12)
+	{
+		riscv_t t;
+		t.S.op_code = op_code;
+		t.S.funct3	= funct3;
+		t.S.rs1		= rs1;
+		t.S.rs2		= rs2;
+		t.S.imm_4_0		= (imm_12 & 0b000000000000000011111) >> 0;
+		t.S.imm_11_5	= (imm_12 & 0b000000000111111100000) >> 5;
+		return t.data;
+	}
+	uint32_t mk_B(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_13)
+	{
+		riscv_t t;
+		t.B.op_code = op_code;
+		t.B.funct3	= funct3;
+		t.B.rs1		= rs1;
+		t.B.rs2		= rs2;
+		t.B.imm_4_1		= (imm_13 & 0b000000000000000011110) >> 1;
+		t.B.imm_10_5	= (imm_13 & 0b000000000011111100000) >> 5;
+		t.B.imm_11		= (imm_13 & 0b000000000100000000000) >> 11;
+		t.B.imm_12		= (imm_13 & 0b000000001000000000000) >> 12;
+		return t.data;
+	}
+	uint32_t mk_U(RISCVOP op_code,uint8_t rd,uint32_t imm_20)
+	{
+		riscv_t t;
+		t.U.op_code = op_code;
+		t.U.rd		= rd;
+		t.U.imm_31_12= (imm_20) >> 0;
+		return t.data;
+	}
+	uint32_t mk_J(RISCVOP op_code,uint8_t rd,uint32_t imm_21)
+	{
+		riscv_t t;
+		t.J.op_code = op_code;
+		t.J.rd		= rd;
+		t.J.imm_10_1= (imm_21 & 0b000000000011111111110) >> 1;
+		t.J.imm_11	= (imm_21 & 0b000000000100000000000) >> 11;
+		t.J.imm_19_12=(imm_21 & 0b011111111000000000000) >> 12;
+		t.J.imm_20	= (imm_21 & 0b100000000000000000000) >> 20;
+		return t.data;
+	}
+
+	uint16_t mk_cj(uint8_t op_code_c,uint32_t imm_12)
+	{
+		riscv_c_t t;
+		t.CJ.op		= (op_code_c & 0b00011) >> 0;
+		t.CJ.funct3	= (op_code_c & 0b11100) >> 2;
+		t.CJ.imm3_1	= (imm_12	& 0b000000001110) >> 1;
+		t.CJ.imm4	= (imm_12	& 0b000000010000) >> 4;
+		t.CJ.imm5	= (imm_12	& 0b000000100000) >> 5;
+		t.CJ.imm6	= (imm_12	& 0b000001000000) >> 6;
+		t.CJ.imm7	= (imm_12	& 0b000010000000) >> 7;
+		t.CJ.imm9_8	= (imm_12	& 0b001100000000) >> 8;
+		t.CJ.imm10	= (imm_12	& 0b010000000000) >> 10;
+		t.CJ.imm11	= (imm_12	& 0b100000000000) >> 11;
+		return t.data;
+	}
+	uint32_t gen_hi(uint32_t val)
+	{
+		if (val & 0b100000000000)
 		{
-			riscv_t t;
-			t.R.op_code = op_code;
-			t.R.rd		= rd;
-			t.R.funct3	= funct3;
-			t.R.rs1		= rs1;
-			t.R.rs2		= rs2;
-			t.R.funct7	= funct7;
-			return t.data;
+			return (val >> 12) + 1;
 		}
-		uint32_t mk_I(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rd,uint8_t rs1,uint32_t imm_12)
+		else
 		{
-			riscv_t t;
-			t.I.op_code = op_code;
-			t.I.rd		= rd;
-			t.I.funct3	= funct3;
-			t.I.rs1		= rs1;
-			t.I.imm_11_0= imm_12;
-			return t.data;
+			return  val >> 12;
 		}
-		uint32_t mk_S(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_12)
-		{
-			riscv_t t;
-			t.S.op_code = op_code;
-			t.S.funct3	= funct3;
-			t.S.rs1		= rs1;
-			t.S.rs2		= rs2;
-			t.S.imm_4_0		= (imm_12 & 0b000000000000000011111) >> 0;
-			t.S.imm_11_5	= (imm_12 & 0b000000000111111100000) >> 5;
-			return t.data;
-		}
-		uint32_t mk_B(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_13)
-		{
-			riscv_t t;
-			t.B.op_code = op_code;
-			t.B.funct3	= funct3;
-			t.B.rs1		= rs1;
-			t.B.rs2		= rs2;
-			t.B.imm_4_1		= (imm_13 & 0b000000000000000011110) >> 1;
-			t.B.imm_10_5	= (imm_13 & 0b000000000011111100000) >> 5;
-			t.B.imm_11		= (imm_13 & 0b000000000100000000000) >> 11;
-			t.B.imm_12		= (imm_13 & 0b000000001000000000000) >> 12;
-			return t.data;
-		}
-		uint32_t mk_U(RISCVOP op_code,uint8_t rd,uint32_t imm_20)
-		{
-			riscv_t t;
-			t.U.op_code = op_code;
-			t.U.rd		= rd;
-			t.U.imm_31_12= (imm_20) >> 0;
-			return t.data;
-		}
-		uint32_t mk_J(RISCVOP op_code,uint8_t rd,uint32_t imm_21)
-		{
-			riscv_t t;
-			t.J.op_code = op_code;
-			t.J.rd		= rd;
-			t.J.imm_10_1= (imm_21 & 0b000000000011111111110) >> 1;
-			t.J.imm_11	= (imm_21 & 0b000000000100000000000) >> 11;
-			t.J.imm_19_12=(imm_21 & 0b011111111000000000000) >> 12;
-			t.J.imm_20	= (imm_21 & 0b100000000000000000000) >> 20;
-			return t.data;
-		}
-		
-		uint16_t mk_cj(uint8_t op_code_c,uint32_t imm_12)
-		{
-			riscv_c_t t;
-			t.CJ.op		= (op_code_c & 0b00011) >> 0;
-			t.CJ.funct3	= (op_code_c & 0b11100) >> 2;
-			t.CJ.imm3_1	= (imm_12	& 0b000000001110) >> 1;
-			t.CJ.imm4	= (imm_12	& 0b000000010000) >> 4;
-			t.CJ.imm5	= (imm_12	& 0b000000100000) >> 5;
-			t.CJ.imm6	= (imm_12	& 0b000001000000) >> 6;
-			t.CJ.imm7	= (imm_12	& 0b000010000000) >> 7;
-			t.CJ.imm9_8	= (imm_12	& 0b001100000000) >> 8;
-			t.CJ.imm10	= (imm_12	& 0b010000000000) >> 10;
-			t.CJ.imm11	= (imm_12	& 0b100000000000) >> 11;
-			return t.data;
-		}
+	}
+
+	uint32_t gen_lo(uint32_t val)
+	{
+		return val & 0b111111111111;
+	}
 
 	size_t JitCompilerRiscv::getCodeSize() {
 		return codePos - prologueSize;
@@ -670,15 +686,40 @@ enum
 	}
 
 	void JitCompilerRiscv::h_IADD_RS(Instruction& instr, int i) {
+		/*
+		ibc.idst = &nreg->r[dst];
+		if (dst != RegisterNeedsDisplacement) {
+			ibc.isrc = &nreg->r[src];
+			ibc.shift = instr.getModShift();
+			ibc.imm = 0;
+		}
+		else {
+			ibc.isrc = &nreg->r[src];
+			ibc.shift = instr.getModShift();
+			ibc.imm = signExtend2sCompl(instr.getImm32());
+		}
+		registerUsage[dst] = i;
+		*ibc.idst += (*ibc.isrc << ibc.shift) + ibc.imm;
+		//*/
 		registerUsage[instr.dst] = i;
-		emit(REX_LEA);
+
+		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_SLLI_7, RISCV_R_S0, RISCV_R_A0 + instr.src, (RISCVFUNC7_IMM_I_SLLI << 5) + instr.getModShift());
+		emit32(i32);
+
 		if (instr.dst == RegisterNeedsDisplacement)
-			emitByte(0xac);
-		else
-			emitByte(0x04 + 8 * instr.dst);
-		genSIB(instr.getModShift(), instr.src, instr.dst);
-		if (instr.dst == RegisterNeedsDisplacement)
-			emit32(instr.getImm32());
+		{
+			// load imm32 to TMP
+			imm32 = instr.getImm32();
+			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			emit32(i32);
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			emit32(i32);
+
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_S4);
+			emit32(i32);
+		}
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_IADD_M(Instruction& instr, int i) {
@@ -701,30 +742,21 @@ enum
 	}
 
 	void JitCompilerRiscv::h_ISUB_R(Instruction& instr, int i) {
-		uint32_t v;
-		uint32_t val;
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
-			v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_SUB,RISCVFUNC7_OP_R_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.src);
-			emit32(v);
+			i32 = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_SUB,RISCVFUNC7_OP_R_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.src);
+			emit32(i32);
 		}
 		else {
-			val = instr.getImm32();
-			if (val & 0b100000000000)
-			{
-				v = mk_U(RISCVOP_LUI,RISCV_R_S4, (val >> 12) + 1);
-			}
-			else
-			{
-				v = mk_U(RISCVOP_LUI,RISCV_R_S4, val >> 12);
-			}
-			emit32(v);
-			v = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, val & 0b111111111111);
-			emit32(v);
-			printf("v: 0x%x\n",v);
+			imm32 = instr.getImm32();
+			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			emit32(i32);
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			emit32(i32);
+			printf("i32: 0x%x\n",i32);
 			
-			v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_SUB,RISCVFUNC7_OP_R_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_S4);
-			emit32(v);
+			i32 = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_SUB,RISCVFUNC7_OP_R_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_S4);
+			emit32(i32);
 		}
 	}
 

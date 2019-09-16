@@ -54,7 +54,7 @@ namespace randomx {
 		printf("RANDOMX_PROGRAM_ITERATIONS:%d\n",RANDOMX_PROGRAM_ITERATIONS);
 		compiler.getProgramFunc()(reg, mem, scratchpad, RANDOMX_PROGRAM_ITERATIONS);
 		printf("scratchpad:%p\n",scratchpad);
-		p_hex("reg\n",&reg,sizeof(reg));
+		p_hex8("reg\n",&reg,sizeof(reg));
 		printf("f:%f %f %f %f %f %f %f %f \n"
 			,reg.f[0].lo,reg.f[0].hi
 			,reg.f[1].lo,reg.f[1].hi

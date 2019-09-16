@@ -230,9 +230,9 @@ namespace randomx {
 		RISCVFUNC3_IMM_I_XORI	= 0b100,
 		RISCVFUNC3_IMM_I_ORI	= 0b110,
 		RISCVFUNC3_IMM_I_ANDI	= 0b111,
-		RISCVFUNC3_IMM_I_SLLI	= 0b001,
-		RISCVFUNC3_IMM_I_SRLI	= 0b101,
-		RISCVFUNC3_IMM_I_SRAI	= 0b101,
+		RISCVFUNC3_IMM_I_SLLI_7	= 0b001,// need func7
+		RISCVFUNC3_IMM_I_SRLI_7	= 0b101,// need func7
+		RISCVFUNC3_IMM_I_SRAI_7	= 0b101,// need func7
 
 		RISCVFUNC3_BRANCH_B_BEQ	= 0b000,
 		RISCVFUNC3_BRANCH_B_BNE	= 0b001,
@@ -298,6 +298,9 @@ namespace randomx {
 		int registerUsage[RegistersCount];
 		uint8_t* code;
 		int32_t codePos;
+
+		uint32_t i32;
+		uint32_t imm32;
 
 		void generateProgramPrologue(Program&, ProgramConfiguration&);
 		void generateProgramEpilogue(Program&);
