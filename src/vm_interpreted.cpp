@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dataset.hpp"
 #include "intrin_portable.h"
 #include "reciprocal.h"
-
+#include "zlog.h"
 namespace randomx {
 
 	template<class Allocator, bool softAes>
@@ -54,7 +54,8 @@ namespace randomx {
 
 	template<class Allocator, bool softAes>
 	void InterpretedVm<Allocator, softAes>::execute() {
-
+		printf("ma:%d mx:%d\n",mem.ma,mem.mx);
+		printf("RANDOMX_PROGRAM_ITERATIONS:%d\n",RANDOMX_PROGRAM_ITERATIONS);
 		NativeRegisterFile nreg;
 
 		for(unsigned i = 0; i < RegisterCountFlt; ++i)
@@ -110,6 +111,8 @@ namespace randomx {
 
 		for (unsigned i = 0; i < RegisterCountFlt; ++i)
 			rx_store_vec_f128(&reg.e[i].lo, nreg.e[i]);
+		printf("scratchpad:%p\n",scratchpad);
+		p_hex8("reg\n",&reg,sizeof(reg));
 	}
 
 	template<class Allocator, bool softAes>

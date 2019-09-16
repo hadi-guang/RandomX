@@ -687,6 +687,7 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_IADD_RS(Instruction& instr, int i) {
 		/*
+		ibc.type = InstructionType::IADD_RS;
 		ibc.idst = &nreg->r[dst];
 		if (dst != RegisterNeedsDisplacement) {
 			ibc.isrc = &nreg->r[src];
@@ -723,18 +724,59 @@ namespace randomx {
 	}
 
 	void JitCompilerRiscv::h_IADD_M(Instruction& instr, int i) {
-		registerUsage[instr.dst] = i;
-		if (instr.src != instr.dst) {
-			genAddressReg(instr);
-			emit(REX_ADD_RM);
-			emitByte(0x04 + 8 * instr.dst);
-			emitByte(0x06);
+		/*
+		ibc.type = InstructionType::IADD_M;
+		ibc.idst = &nreg->r[dst];
+		ibc.imm = signExtend2sCompl(instr.getImm32());
+		if (src != dst) {
+			ibc.isrc = &nreg->r[src];
+			ibc.memMask = (instr.getModMem() ? ScratchpadL1Mask : ScratchpadL2Mask);
 		}
 		else {
-			emit(REX_ADD_RM);
-			emitByte(0x86 + 8 * instr.dst);
-			genAddressImm(instr);
+			ibc.isrc = &zero;
+			ibc.memMask = ScratchpadL3Mask;
 		}
+		registerUsage[dst] = i;
+		*ibc.idst += load64(getScratchpadAddress(ibc, scratchpad));
+		*/
+		registerUsage[instr.dst] = i;
+		// load imm32 to TMP
+		imm32 = instr.getImm32();
+		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+		emit32(i32);
+		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+		emit32(i32);
+
+		if (instr.src != instr.dst) {
+			// add src		
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
+			emit32(i32);
+			// mask
+			if (instr.getModMem())
+			{
+				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
+				emit32(i32);
+			}
+			else
+			{
+				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
+				emit32(i32);
+			}
+		}
+		else {
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
+			emit32(i32);
+		}
+
+		//add scratchpad
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
+		emit32(i32);
+		//load
+		i32 = mk_I(RISCVOP_LOAD, RISCVFUNC3_LOAD_I_LD, RISCV_R_S0, RISCV_R_S0, 0);
+		emit32(i32);
+		// add to dst
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::genSIB(int scale, int index, int base) {

@@ -37,9 +37,9 @@
 	mv	t4, t1	;# registers "spAddr1" "spAddr0" init use "ma" "mx"
 	li	t5, (RANDOMX_SCRATCHPAD_MASK << 32) + RANDOMX_SCRATCHPAD_MASK
 
-	li	s1,	RANDOMX_SCRATCHPAD_L1;
-	li	s2,	RANDOMX_SCRATCHPAD_L2;
-	li	s3,	RANDOMX_SCRATCHPAD_L3;
+	li	s1,	RANDOMX_SCRATCHPAD_L1-8;
+	li	s2,	RANDOMX_SCRATCHPAD_L2-8;
+	li	s3,	RANDOMX_SCRATCHPAD_L3-8;
 	
 
 ;#	zero integer registers
