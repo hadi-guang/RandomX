@@ -909,28 +909,51 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_IMULH_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		// mul
+		// mulhu
 		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MULHU, RISCVFUNC7_OP_R_MULHU, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
 		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_IMULH_M(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
+		// load imm32 to TMP
+		imm32 = instr.getImm32();
+		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+		emit32(i32);
+		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+		emit32(i32);
+
 		if (instr.src != instr.dst) {
-			genAddressReg(instr, false);
-			emit(REX_MOV_RR64);
-			emitByte(0xc0 + instr.dst);
-			emit(REX_MUL_MEM);
+			// add src		
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
+			emit32(i32);
+			// mask
+			if (instr.getModMem())
+			{
+				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
+				emit32(i32);
+			}
+			else
+			{
+				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
+				emit32(i32);
+			}
 		}
 		else {
-			emit(REX_MOV_RR64);
-			emitByte(0xc0 + instr.dst);
-			emit(REX_MUL_M);
-			emitByte(0xa6);
-			genAddressImm(instr);
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
+			emit32(i32);
 		}
-		emit(REX_MOV_R64R);
-		emitByte(0xc2 + 8 * instr.dst);
+
+		//add scratchpad
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
+		emit32(i32);
+		//load
+		i32 = mk_I(RISCVOP_LOAD, RISCVFUNC3_LOAD_I_LD, RISCV_R_S0, RISCV_R_S0, 0);
+		emit32(i32);
+		
+		// mulhu
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MULHU, RISCVFUNC7_OP_R_MULHU, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_ISMULH_R(Instruction& instr, int i) {
