@@ -56,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RANDOMX_PROGRAM_SIZE       256
 
 //Number of iterations during VM execution.
-#define RANDOMX_PROGRAM_ITERATIONS 16384
+#define RANDOMX_PROGRAM_ITERATIONS 32768
 
 //Number of chained VM executions per hash.
 #define RANDOMX_PROGRAM_COUNT      1
@@ -82,16 +82,16 @@ Total sum of frequencies must be 256
 */
 
 //Integer instructions
-#define RANDOMX_FREQ_IADD_RS       25//25
-#define RANDOMX_FREQ_IADD_M        7// 7
-#define RANDOMX_FREQ_ISUB_R        16//16
-#define RANDOMX_FREQ_ISUB_M        7// 7
+#define RANDOMX_FREQ_IADD_RS       0//25
+#define RANDOMX_FREQ_IADD_M        0// 7
+#define RANDOMX_FREQ_ISUB_R        0//16
+#define RANDOMX_FREQ_ISUB_M        0// 7
 #define RANDOMX_FREQ_IMUL_R        16//16
-#define RANDOMX_FREQ_IMUL_M        4// 4
-#define RANDOMX_FREQ_IMULH_R       4// 4
-#define RANDOMX_FREQ_IMULH_M       1// 1
+#define RANDOMX_FREQ_IMUL_M        16// 4
+#define RANDOMX_FREQ_IMULH_R       16// 4
+#define RANDOMX_FREQ_IMULH_M       16// 1
 #define RANDOMX_FREQ_ISMULH_R      0// 4
-#define RANDOMX_FREQ_ISMULH_M      0// 1
+#define RANDOMX_FREQ_ISMULH_M      4// 1
 #define RANDOMX_FREQ_IMUL_RCP      0// 8
 #define RANDOMX_FREQ_INEG_R        0// 2
 #define RANDOMX_FREQ_IXOR_R        0//15
@@ -119,7 +119,7 @@ Total sum of frequencies must be 256
 #define RANDOMX_FREQ_ISTORE        0//16
 
 //No-op instruction
-#define RANDOMX_FREQ_NOP          176
+#define RANDOMX_FREQ_NOP          188
 /*                               ------
                                   256
 */
