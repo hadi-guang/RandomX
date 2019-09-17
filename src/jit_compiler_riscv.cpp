@@ -709,8 +709,8 @@ namespace randomx {
 
 		if (instr.dst == RegisterNeedsDisplacement)
 		{
-			// load imm32 to TMP
 			imm32 = instr.getImm32();
+			// load imm32 to TMP
 			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
 			emit32(i32);
 			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
@@ -740,8 +740,8 @@ namespace randomx {
 		*ibc.idst += load64(getScratchpadAddress(ibc, scratchpad));
 		*/
 		registerUsage[instr.dst] = i;
-		// load imm32 to TMP
 		imm32 = instr.getImm32();
+		// load imm32 to TMP
 		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
 		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
@@ -791,6 +791,7 @@ namespace randomx {
 		}
 		else {
 			imm32 = instr.getImm32();
+			// load imm32 to TMP
 			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
 			emit32(i32);
 			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
@@ -804,8 +805,9 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_ISUB_M(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		// load imm32 to TMP
 		imm32 = instr.getImm32();
+
+		// load imm32 to TMP
 		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
 		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
@@ -852,8 +854,8 @@ namespace randomx {
 			emit32(i32);
 		}
 		else {
-			// load imm32 to TMP
 			imm32 = instr.getImm32();
+			// load imm32 to TMP
 			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
 			emit32(i32);
 			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
@@ -867,8 +869,9 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_IMUL_M(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		// load imm32 to TMP
 		imm32 = instr.getImm32();
+
+		// load imm32 to TMP
 		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
 		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
@@ -916,8 +919,9 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_IMULH_M(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		// load imm32 to TMP
+
 		imm32 = instr.getImm32();
+		// load imm32 to TMP
 		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
 		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
@@ -965,8 +969,9 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_ISMULH_M(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		// load imm32 to TMP
+
 		imm32 = instr.getImm32();
+		// load imm32 to TMP
 		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
 		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
@@ -1006,12 +1011,49 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_IMUL_RCP(Instruction& instr, int i) {
 		uint64_t divisor = instr.getImm32();
+		int negative = 0;
 		if (!isPowerOf2(divisor)) {
 			registerUsage[instr.dst] = i;
-			emit(MOV_RAX_I);
-			emit64(randomx_reciprocal_fast(divisor));
-			emit(REX_IMUL_RM);
-			emitByte(0xc0 + 8 * instr.dst);
+			
+			// TODO: optimize
+			divisor = randomx_reciprocal_fast(divisor);
+			imm32 = divisor;
+			if (imm32 & 0x80000000)
+			{
+				negative = 1;
+			}
+
+			// load imm32 to TMP
+			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			emit32(i32);
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			emit32(i32);
+
+			imm32 = divisor >> 32;
+			if (negative)
+			{
+				imm32++;
+			}
+
+			// load imm32 to TMP
+			i32 = mk_U(RISCVOP_LUI,RISCV_R_S5, gen_hi(imm32));
+			emit32(i32);
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S5, RISCV_R_S5, gen_lo(imm32));
+			emit32(i32);
+
+			//make imm64
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S0, RISCV_R_ZERO, 32);
+			emit32(i32);
+
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SLL, RISCVFUNC7_OP_R_SLL, RISCV_R_S5, RISCV_R_S5, RISCV_R_S0);
+			emit32(i32);
+
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD, RISCV_R_S5, RISCV_R_S5, RISCV_R_S4);
+			emit32(i32);
+
+			// mul
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MUL, RISCVFUNC7_OP_R_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S5);
+			emit32(i32);
 		}
 	}
 

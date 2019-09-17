@@ -207,7 +207,7 @@ DECL(randomx_sshash_init):
 DECL(randomx_program_end):
 	nop
 
-DECL(randomx_reciprocal_fast):
+#DECL(randomx_reciprocal_fast):
 #if !defined(WINABI)
 #	mov rcx, rdi
 #endif
