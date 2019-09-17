@@ -1067,13 +1067,21 @@ namespace randomx {
 	void JitCompilerRiscv::h_IXOR_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
-			emit(REX_XOR_RR);
-			emitByte(0xc0 + 8 * instr.dst + instr.src);
+			// xor
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_XOR, RISCVFUNC7_OP_R_XOR, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
+			emit32(i32);
 		}
 		else {
-			emit(REX_XOR_RI);
-			emitByte(0xf0 + instr.dst);
-			emit32(instr.getImm32());
+			imm32 = instr.getImm32();
+			// load imm32 to TMP
+			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			emit32(i32);
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			emit32(i32);
+
+			// xor
+			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_XOR, RISCVFUNC7_OP_R_XOR, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S4);
+			emit32(i32);
 		}
 	}
 
