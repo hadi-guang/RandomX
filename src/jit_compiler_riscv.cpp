@@ -1129,16 +1129,33 @@ namespace randomx {
 	void JitCompilerRiscv::h_IROR_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
-			emit(REX_MOV_RR);
-			emitByte(0xc8 + instr.src);
-			emit(REX_ROT_CL);
-			emitByte(0xc8 + instr.dst);
+			//mask
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ANDI, RISCV_R_S0, RISCV_R_A0 + instr.src, 63);
+			emit32(i32);
 		}
 		else {
-			emit(REX_ROT_I8);
-			emitByte(0xc8 + instr.dst);
-			emitByte(instr.getImm32() & 63);
+			imm32 = instr.getImm32();
+			// mask
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S0, RISCV_R_ZERO, (imm32) & 63);
+			emit32(i32);
 		}
+		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_ZERO, 64);
+		emit32(i32);
+		
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SUB, RISCVFUNC7_OP_R_SUB, RISCV_R_S4, RISCV_R_S4, RISCV_R_S0);
+		emit32(i32);
+
+		// srl
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SRL, RISCVFUNC7_OP_R_SRL, RISCV_R_S0, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		emit32(i32);
+
+		// sll
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SLL, RISCVFUNC7_OP_R_SLL, RISCV_R_S4, RISCV_R_A0 + instr.dst, RISCV_R_S4);
+		emit32(i32);
+
+		//or
+		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_OR, RISCVFUNC7_OP_R_OR, RISCV_R_A0 + instr.dst, RISCV_R_S0, RISCV_R_S4);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_IROL_R(Instruction& instr, int i) {
