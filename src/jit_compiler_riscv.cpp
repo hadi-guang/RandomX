@@ -1059,8 +1059,9 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_INEG_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		emit(REX_NEG);
-		emitByte(0xd8 + instr.dst);
+		// neg
+		i32 =mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SUB, RISCVFUNC7_OP_R_SUB, RISCV_R_A0 + instr.dst, RISCV_R_ZERO, RISCV_R_A0 + instr.dst);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_IXOR_R(Instruction& instr, int i) {
