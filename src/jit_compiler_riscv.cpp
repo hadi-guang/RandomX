@@ -1194,8 +1194,14 @@ namespace randomx {
 		if (instr.src != instr.dst) {
 			registerUsage[instr.dst] = i;
 			registerUsage[instr.src] = i;
-			emit(REX_XCHG);
-			emitByte(0xc0 + instr.src + 8 * instr.dst);
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S0, RISCV_R_A0 + instr.dst, 0);
+			emit32(i32);
+
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src, 0);
+			emit32(i32);
+
+			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_A0 + instr.src, RISCV_R_S0, 0);
+			emit32(i32);
 		}
 	}
 
