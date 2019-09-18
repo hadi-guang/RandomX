@@ -1,17 +1,14 @@
-;#	save callee-saved registers fs0-fs11 s1-s3
+;#	save callee-saved registers fs2-fs9 s1-s3
 	addi	sp,	sp,	-184
-	fsd	fs0,	0x00(sp)
-	fsd	fs1,	0x08(sp)
-	fsd	fs2,	0x10(sp)
-	fsd	fs3,	0x18(sp)
-	fsd	fs4,	0x20(sp)
-	fsd	fs5,	0x28(sp)
-	fsd	fs6,	0x30(sp)
-	fsd	fs7,	0x38(sp)
-#	fsd	fs8,	0x40(sp)
-#	fsd	fs9,	0x48(sp)
-#	fsd	fs10,	0x50(sp)
-#	fsd	fs11,	0x58(sp)
+	fsd	fs2,	0x00(sp)
+	fsd	fs3,	0x08(sp)
+	fsd	fs4,	0x10(sp)
+	fsd	fs5,	0x18(sp)
+	fsd	fs6,	0x20(sp)
+	fsd	fs7,	0x28(sp)
+	fsd	fs8,	0x30(sp)
+	fsd	fs9,	0x38(sp)
+
 	sd	s0,	0x40(sp)
 	sd	s1,	0x60(sp)
 	sd	s2,	0x68(sp)
@@ -80,11 +77,11 @@
 #	fld 	ft3,	0xB0(t0)
 #	fld 	ft7,	0xB8(t0)
 	#load a0-a3
-	fld 	fs0,	0xC0(t0)	;# a0 - a3
-	fld 	fs4,	0xC8(t0)
-	fld 	fs1,	0xD0(t0)
-	fld 	fs5,	0xD8(t0)
-	fld 	fs2,	0xE0(t0)
-	fld 	fs6,	0xE8(t0)
-	fld 	fs3,	0xF0(t0)
-	fld 	fs7,	0xF8(t0)
+	fld 	fs2,	0xC0(t0)	;# a0 - a3
+	fld 	fs6,	0xC8(t0)
+	fld 	fs3,	0xD0(t0)
+	fld 	fs7,	0xD8(t0)
+	fld 	fs4,	0xE0(t0)
+	fld 	fs8,	0xE8(t0)
+	fld 	fs5,	0xF0(t0)
+	fld 	fs9,	0xF8(t0)

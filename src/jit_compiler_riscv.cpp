@@ -257,7 +257,7 @@ namespace randomx {
 		uint16_t data;
 	}riscv_c_t;
 
-	uint32_t mk_R(RISCVOP op_code,RISCVFUNC3 funct3,RISCVFUNC7 funct7,uint8_t rd,uint8_t rs1,uint8_t rs2)
+	uint32_t mk_R(RISCVOP op_code,RISCVF3 funct3,RISCVE funct7,uint8_t rd,uint8_t rs1,uint8_t rs2)
 	{
 		riscv_t t;
 		t.R.op_code = op_code;
@@ -268,7 +268,7 @@ namespace randomx {
 		t.R.funct7	= funct7;
 		return t.data;
 	}
-	uint32_t mk_I(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rd,uint8_t rs1,uint32_t imm_12)
+	uint32_t mk_I(RISCVOP op_code,RISCVF3 funct3,uint8_t rd,uint8_t rs1,uint32_t imm_12)
 	{
 		riscv_t t;
 		t.I.op_code = op_code;
@@ -278,7 +278,7 @@ namespace randomx {
 		t.I.imm_11_0= imm_12;
 		return t.data;
 	}
-	uint32_t mk_S(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_12)
+	uint32_t mk_S(RISCVOP op_code,RISCVF3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_12)
 	{
 		riscv_t t;
 		t.S.op_code = op_code;
@@ -289,7 +289,7 @@ namespace randomx {
 		t.S.imm_11_5	= (imm_12 & 0b000000000111111100000) >> 5;
 		return t.data;
 	}
-	uint32_t mk_B(RISCVOP op_code,RISCVFUNC3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_13)
+	uint32_t mk_B(RISCVOP op_code,RISCVF3 funct3,uint8_t rs1,uint8_t rs2,uint32_t imm_13)
 	{
 		riscv_t t;
 		t.B.op_code = op_code;
@@ -472,7 +472,7 @@ namespace randomx {
 		{
 			rs1 = RISCV_R_A1;
 		}
-		v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_XOR,RISCVFUNC7_OP_R_XOR,RISCV_R_T4,RISCV_R_T4,rs1);
+		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR,RISCVE7_OP_XOR,RISCV_R_T4,RISCV_R_T4,rs1);
 		emit32(v);
 		if (pcfg.readReg1 == 2)
 		{
@@ -482,7 +482,7 @@ namespace randomx {
 		{
 			rs2 = RISCV_R_A3;
 		}
-		v = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_XOR,RISCVFUNC7_OP_R_XOR,RISCV_R_T4,RISCV_R_T4,rs2);
+		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR,RISCVE7_OP_XOR,RISCV_R_T4,RISCV_R_T4,rs2);
 		emit32(v);
 
 		//	spAddr0 &= ScratchpadL3Mask64;
@@ -520,17 +520,17 @@ namespace randomx {
 	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
 
 	// sub program_iterations (t3)
-	v = mk_I(RISCVOP_IMM,RISCVFUNC3_IMM_I_ADDI, RISCV_R_T3, RISCV_R_T3,-1);
+	v = mk_I(RISCVOP_IMM_I,RISCVF3_IMM_ADDI, RISCV_R_T3, RISCV_R_T3,-1);
 	emit32(v);
 
 	// if (program_iterations == zero) jump exit
-	v = mk_B(RISCVOP_BRANCH,RISCVFUNC3_BRANCH_B_BEQ,RISCV_R_T3,RISCV_R_ZERO,4+loopStoreSize+4);
+	v = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BEQ,RISCV_R_T3,RISCV_R_ZERO,4+loopStoreSize+4);
 	emit32(v);
 	memcpy(code + codePos, codeLoopStore, loopStoreSize);
 	codePos += loopStoreSize;
 
 	// jump to prologue
-	v = mk_J(RISCVOP_JAL,RISCV_R_ZERO,prologueSize - codePos);
+	v = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,prologueSize - codePos);
 	emit32(v);
 
 	// exit:
@@ -538,7 +538,7 @@ namespace randomx {
 	codePos += loopStoreLastSize;
 	
 	// jump to epilogue
-	v = mk_J(RISCVOP_JAL,RISCV_R_ZERO,epilogueOffset - codePos);
+	v = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,epilogueOffset - codePos);
 	emit32(v);
 #else
 		memcpy(code + codePos, codeLoopStore, loopStoreSize);
@@ -704,22 +704,22 @@ namespace randomx {
 		//*/
 		registerUsage[instr.dst] = i;
 
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_SLLI_7, RISCV_R_S0, RISCV_R_A0 + instr.src, (RISCVFUNC7_IMM_I_SLLI << 5) + instr.getModShift());
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_7, RISCV_R_S0, RISCV_R_A0 + instr.src, (RISCVE7_IMM_SLLI << 5) + instr.getModShift());
 		emit32(i32);
 
 		if (instr.dst == RegisterNeedsDisplacement)
 		{
 			imm32 = instr.getImm32();
 			// load imm32 to TMP
-			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 			emit32(i32);
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 			emit32(i32);
 
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_S4);
 			emit32(i32);
 		}
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 	}
 
@@ -742,40 +742,40 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
-		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+		i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
 			// add src		
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
 				emit32(i32);
 			}
 			else
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
 				emit32(i32);
 			}
 		}
 		else {
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
 			emit32(i32);
 		}
 
 		//add scratchpad
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
 		emit32(i32);
 		//load
-		i32 = mk_I(RISCVOP_LOAD, RISCVFUNC3_LOAD_I_LD, RISCV_R_S0, RISCV_R_S0, 0);
+		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RISCV_R_S0, RISCV_R_S0, 0);
 		emit32(i32);
 		// add to dst
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 	}
 
@@ -786,19 +786,19 @@ namespace randomx {
 	void JitCompilerRiscv::h_ISUB_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
-			i32 = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_SUB,RISCVFUNC7_OP_R_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.src);
+			i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_SUB,RISCVE7_OP_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.src);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// load imm32 to TMP
-			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 			emit32(i32);
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 			emit32(i32);
 			printf("i32: 0x%x\n",i32);
 			
-			i32 = mk_R(RISCVOP_OP,RISCVFUNC3_OP_R_SUB,RISCVFUNC7_OP_R_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_SUB,RISCVE7_OP_SUB,RISCV_R_A0+instr.dst,RISCV_R_A0+instr.dst,RISCV_R_S4);
 			emit32(i32);
 		}
 	}
@@ -808,40 +808,40 @@ namespace randomx {
 		imm32 = instr.getImm32();
 
 		// load imm32 to TMP
-		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+		i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
 			// add src		
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
 				emit32(i32);
 			}
 			else
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
 				emit32(i32);
 			}
 		}
 		else {
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
 			emit32(i32);
 		}
 
 		//add scratchpad
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
 		emit32(i32);
 		//load
-		i32 = mk_I(RISCVOP_LOAD, RISCVFUNC3_LOAD_I_LD, RISCV_R_S0, RISCV_R_S0, 0);
+		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RISCV_R_S0, RISCV_R_S0, 0);
 		emit32(i32);
 		// add to dst
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SUB, RISCVFUNC7_OP_R_SUB, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB, RISCVE7_OP_SUB, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 
 	}
@@ -850,19 +850,19 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
 			// mul
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MUL, RISCVFUNC7_OP_R_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL, RISCVE7_OP_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// load imm32 to TMP
-			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 			emit32(i32);
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 			emit32(i32);
 
 			// mul
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MUL, RISCVFUNC7_OP_R_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL, RISCVE7_OP_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S4);
 			emit32(i32);
 		}
 	}
@@ -872,48 +872,48 @@ namespace randomx {
 		imm32 = instr.getImm32();
 
 		// load imm32 to TMP
-		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+		i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
 			// add src		
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
 				emit32(i32);
 			}
 			else
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
 				emit32(i32);
 			}
 		}
 		else {
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
 			emit32(i32);
 		}
 
 		//add scratchpad
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
 		emit32(i32);
 		//load
-		i32 = mk_I(RISCVOP_LOAD, RISCVFUNC3_LOAD_I_LD, RISCV_R_S0, RISCV_R_S0, 0);
+		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RISCV_R_S0, RISCV_R_S0, 0);
 		emit32(i32);
 
 		// mul
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MUL, RISCVFUNC7_OP_R_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL, RISCVE7_OP_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_IMULH_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		// mulhu
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MULHU, RISCVFUNC7_OP_R_MULHU, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULHU, RISCVE7_OP_MULHU, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
 		emit32(i32);
 	}
 
@@ -922,48 +922,48 @@ namespace randomx {
 
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
-		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+		i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
 			// add src		
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
 				emit32(i32);
 			}
 			else
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
 				emit32(i32);
 			}
 		}
 		else {
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
 			emit32(i32);
 		}
 
 		//add scratchpad
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
 		emit32(i32);
 		//load
-		i32 = mk_I(RISCVOP_LOAD, RISCVFUNC3_LOAD_I_LD, RISCV_R_S0, RISCV_R_S0, 0);
+		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RISCV_R_S0, RISCV_R_S0, 0);
 		emit32(i32);
 		
 		// mulhu
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MULHU, RISCVFUNC7_OP_R_MULHU, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULHU, RISCVE7_OP_MULHU, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_ISMULH_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		// mulh
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MULH, RISCVFUNC7_OP_R_MULH, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULH, RISCVE7_OP_MULH, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
 		emit32(i32);
 	}
 
@@ -972,40 +972,40 @@ namespace randomx {
 
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
-		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+		i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
 			// add src		
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
 				emit32(i32);
 			}
 			else
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
 				emit32(i32);
 			}
 		}
 		else {
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
 			emit32(i32);
 		}
 
 		//add scratchpad
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
 		emit32(i32);
 		//load
-		i32 = mk_I(RISCVOP_LOAD, RISCVFUNC3_LOAD_I_LD, RISCV_R_S0, RISCV_R_S0, 0);
+		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RISCV_R_S0, RISCV_R_S0, 0);
 		emit32(i32);
 		// mulh
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MULH, RISCVFUNC7_OP_R_MULH, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULH, RISCVE7_OP_MULH, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 	}
 
@@ -1015,7 +1015,6 @@ namespace randomx {
 		if (!isPowerOf2(divisor)) {
 			registerUsage[instr.dst] = i;
 			
-			// TODO: optimize
 			divisor = randomx_reciprocal_fast(divisor);
 			imm32 = divisor;
 			if (imm32 & 0x80000000)
@@ -1024,9 +1023,9 @@ namespace randomx {
 			}
 
 			// load imm32 to TMP
-			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 			emit32(i32);
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 			emit32(i32);
 
 			imm32 = divisor >> 32;
@@ -1036,23 +1035,23 @@ namespace randomx {
 			}
 
 			// load imm32 to TMP
-			i32 = mk_U(RISCVOP_LUI,RISCV_R_S5, gen_hi(imm32));
+			i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S5, gen_hi(imm32));
 			emit32(i32);
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S5, RISCV_R_S5, gen_lo(imm32));
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S5, RISCV_R_S5, gen_lo(imm32));
 			emit32(i32);
 
 			//make imm64
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S0, RISCV_R_ZERO, 32);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S0, RISCV_R_ZERO, 32);
 			emit32(i32);
 
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SLL, RISCVFUNC7_OP_R_SLL, RISCV_R_S5, RISCV_R_S5, RISCV_R_S0);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SLL, RISCVE7_OP_SLL, RISCV_R_S5, RISCV_R_S5, RISCV_R_S0);
 			emit32(i32);
 
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD, RISCV_R_S5, RISCV_R_S5, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD, RISCV_R_S5, RISCV_R_S5, RISCV_R_S4);
 			emit32(i32);
 
 			// mul
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_MUL, RISCVFUNC7_OP_R_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S5);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL, RISCVE7_OP_MUL, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S5);
 			emit32(i32);
 		}
 	}
@@ -1060,7 +1059,7 @@ namespace randomx {
 	void JitCompilerRiscv::h_INEG_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		// neg
-		i32 =mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SUB, RISCVFUNC7_OP_R_SUB, RISCV_R_A0 + instr.dst, RISCV_R_ZERO, RISCV_R_A0 + instr.dst);
+		i32 =mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB, RISCVE7_OP_SUB, RISCV_R_A0 + instr.dst, RISCV_R_ZERO, RISCV_R_A0 + instr.dst);
 		emit32(i32);
 	}
 
@@ -1068,19 +1067,19 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
 			// xor
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_XOR, RISCVFUNC7_OP_R_XOR, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR, RISCVE7_OP_XOR, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// load imm32 to TMP
-			i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+			i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 			emit32(i32);
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 			emit32(i32);
 
 			// xor
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_XOR, RISCVFUNC7_OP_R_XOR, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR, RISCVE7_OP_XOR, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S4);
 			emit32(i32);
 		}
 	}
@@ -1089,40 +1088,40 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
-		i32 = mk_U(RISCVOP_LUI,RISCV_R_S4, gen_hi(imm32));
+		i32 = mk_U(RISCVOP_LUI_U,RISCV_R_S4, gen_hi(imm32));
 		emit32(i32);
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_S4, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
 			// add src		
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_A0 + instr.src, RISCV_R_S4);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S1);
 				emit32(i32);
 			}
 			else
 			{
-				i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S0, RISCV_R_S2);
 				emit32(i32);
 			}
 		}
 		else {
-			i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_AND, RISCVFUNC7_OP_R_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND, RISCVE7_OP_AND, RISCV_R_S0, RISCV_R_S4, RISCV_R_S3);
 			emit32(i32);
 		}
 
 		//add scratchpad
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_ADD, RISCVFUNC7_OP_R_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD, RISCVE7_OP_ADD,RISCV_R_S0, RISCV_R_S0, RISCV_R_T2);
 		emit32(i32);
 		//load
-		i32 = mk_I(RISCVOP_LOAD, RISCVFUNC3_LOAD_I_LD, RISCV_R_S0, RISCV_R_S0, 0);
+		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RISCV_R_S0, RISCV_R_S0, 0);
 		emit32(i32);
 		// xor
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_XOR, RISCVFUNC7_OP_R_XOR, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR, RISCVE7_OP_XOR, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 	}
 
@@ -1130,31 +1129,31 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
 			//mask
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ANDI, RISCV_R_S0, RISCV_R_A0 + instr.src, 63);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ANDI, RISCV_R_S0, RISCV_R_A0 + instr.src, 63);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// mask
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S0, RISCV_R_ZERO, (imm32) & 63);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S0, RISCV_R_ZERO, (imm32) & 63);
 			emit32(i32);
 		}
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_ZERO, 64);
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_ZERO, 64);
 		emit32(i32);
 		
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SUB, RISCVFUNC7_OP_R_SUB, RISCV_R_S4, RISCV_R_S4, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB, RISCVE7_OP_SUB, RISCV_R_S4, RISCV_R_S4, RISCV_R_S0);
 		emit32(i32);
 
 		// srl
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SRL, RISCVFUNC7_OP_R_SRL, RISCV_R_S0, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SRL, RISCVE7_OP_SRL, RISCV_R_S0, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 
 		// sll
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SLL, RISCVFUNC7_OP_R_SLL, RISCV_R_S4, RISCV_R_A0 + instr.dst, RISCV_R_S4);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SLL, RISCVE7_OP_SLL, RISCV_R_S4, RISCV_R_A0 + instr.dst, RISCV_R_S4);
 		emit32(i32);
 
 		//or
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_OR, RISCVFUNC7_OP_R_OR, RISCV_R_A0 + instr.dst, RISCV_R_S0, RISCV_R_S4);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR, RISCVE7_OP_OR, RISCV_R_A0 + instr.dst, RISCV_R_S0, RISCV_R_S4);
 		emit32(i32);
 	}
 
@@ -1162,31 +1161,31 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
 			//mask
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ANDI, RISCV_R_S0, RISCV_R_A0 + instr.src, 63);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ANDI, RISCV_R_S0, RISCV_R_A0 + instr.src, 63);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// mask
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S0, RISCV_R_ZERO, (imm32) & 63);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S0, RISCV_R_ZERO, (imm32) & 63);
 			emit32(i32);
 		}
-		i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S4, RISCV_R_ZERO, 64);
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S4, RISCV_R_ZERO, 64);
 		emit32(i32);
 		
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SUB, RISCVFUNC7_OP_R_SUB, RISCV_R_S4, RISCV_R_S4, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB, RISCVE7_OP_SUB, RISCV_R_S4, RISCV_R_S4, RISCV_R_S0);
 		emit32(i32);
 
 		// srl
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SRL, RISCVFUNC7_OP_R_SRL, RISCV_R_S4, RISCV_R_A0 + instr.dst, RISCV_R_S4);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SRL, RISCVE7_OP_SRL, RISCV_R_S4, RISCV_R_A0 + instr.dst, RISCV_R_S4);
 		emit32(i32);
 
 		// sll
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_SLL, RISCVFUNC7_OP_R_SLL, RISCV_R_S0, RISCV_R_A0 + instr.dst, RISCV_R_S0);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SLL, RISCVE7_OP_SLL, RISCV_R_S0, RISCV_R_A0 + instr.dst, RISCV_R_S0);
 		emit32(i32);
 
 		//or
-		i32 = mk_R(RISCVOP_OP, RISCVFUNC3_OP_R_OR, RISCVFUNC7_OP_R_OR, RISCV_R_A0 + instr.dst, RISCV_R_S0, RISCV_R_S4);
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR, RISCVE7_OP_OR, RISCV_R_A0 + instr.dst, RISCV_R_S0, RISCV_R_S4);
 		emit32(i32);
 	}
 
@@ -1194,13 +1193,13 @@ namespace randomx {
 		if (instr.src != instr.dst) {
 			registerUsage[instr.dst] = i;
 			registerUsage[instr.src] = i;
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_S0, RISCV_R_A0 + instr.dst, 0);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_S0, RISCV_R_A0 + instr.dst, 0);
 			emit32(i32);
 
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src, 0);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_A0 + instr.dst, RISCV_R_A0 + instr.src, 0);
 			emit32(i32);
 
-			i32 = mk_I(RISCVOP_IMM, RISCVFUNC3_IMM_I_ADDI, RISCV_R_A0 + instr.src, RISCV_R_S0, 0);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RISCV_R_A0 + instr.src, RISCV_R_S0, 0);
 			emit32(i32);
 		}
 	}
