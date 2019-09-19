@@ -175,34 +175,9 @@ namespace randomx {
 #define	RISCV_R_S10		(26)	// E 'or' mask high
 #define	RISCV_R_S11		(27)	// scale mask
 #define	RISCV_R_T3		(28)	//program_iterations
-#define	RISCV_R_T4		(29)	
-#define	RISCV_R_T5		(30)	
-#define	RISCV_R_T6		(31)	
-
-#define RISCV_EL0		(0)		//"el0"
-#define RISCV_EL1		(1)		//"el1"
-#define RISCV_EL2		(2)		//"el2"
-#define RISCV_EL3		(3)		//"el3"
-#define RISCV_EH0		(4)		//"eh0"
-#define RISCV_EH1		(5)		//"eh1"
-#define RISCV_EH2		(6)		//"eh2"
-#define RISCV_EH3		(7)		//"eh3"
-#define RISCV_FL0		(10)	//"fl0"
-#define RISCV_FL1		(11)	//"fl1"
-#define RISCV_FL2		(12)	//"fl2"
-#define RISCV_FL3		(13)	//"fl3"
-#define RISCV_FH0		(14)	//"fh0"
-#define RISCV_FH1		(15)	//"fh1"
-#define RISCV_FH2		(16)	//"fh2"
-#define RISCV_FH3		(17)	//"fh3"
-#define RISCV_AL0		(18)	//"al0"
-#define RISCV_AL1		(19)	//"al1"
-#define RISCV_AL2		(20)	//"al2"
-#define RISCV_AL3		(21)	//"al3"
-#define RISCV_AH0		(22)	//"ah0"
-#define RISCV_AH1		(23)	//"ah1"
-#define RISCV_AH2		(24)	//"ah2"
-#define RISCV_AH3		(25)	//"ah3"
+#define	RISCV_R_T4		(29)
+#define	RISCV_R_T5		(30)
+#define	RISCV_R_T6		(31)
 
 #define RISCV_FT0		(0)		//"el0"
 #define RISCV_FT1		(1)		//"el1"
@@ -236,6 +211,51 @@ namespace randomx {
 #define RISCV_FT9		(29)
 #define RISCV_FT10		(30)
 #define RISCV_FT11		(31)
+
+
+#define RX_SCRATCGPAD			RISCV_R_T2
+#define RX_PROGRAM_ITERATION	RISCV_R_T3
+#define RX_TMP0		RISCV_R_S0
+#define RX_TMP1		RISCV_R_S4
+#define RX_TMP2		RISCV_R_S5
+#define RX_L1M		RISCV_R_S1
+#define RX_L2M		RISCV_R_S2
+#define RX_L3M		RISCV_R_S3
+
+#define RX_R0		RISCV_R_A0
+#define RX_R1		RISCV_R_A1
+#define RX_R2		RISCV_R_A2
+#define RX_R3		RISCV_R_A3
+#define RX_R4		RISCV_R_A4
+#define RX_R5		RISCV_R_A5
+#define RX_R6		RISCV_R_A6
+#define RX_R7		RISCV_R_A7
+#define RX_EL0		RISCV_FT0
+#define RX_EL1		RISCV_FT1
+#define RX_EL2		RISCV_FT2
+#define RX_EL3		RISCV_FT3
+#define RX_EH0		RISCV_FT4
+#define RX_EH1		RISCV_FT5
+#define RX_EH2		RISCV_FT6
+#define RX_EH3		RISCV_FT7
+#define RX_FL0		RISCV_FA0
+#define RX_FL1		RISCV_FA1
+#define RX_FL2		RISCV_FA2
+#define RX_FL3		RISCV_FA3
+#define RX_FH0		RISCV_FA4
+#define RX_FH1		RISCV_FA5
+#define RX_FH2		RISCV_FA6
+#define RX_FH3		RISCV_FA7
+#define RX_AL0		RISCV_FS2
+#define RX_AL1		RISCV_FS3
+#define RX_AL2		RISCV_FS4
+#define RX_AL3		RISCV_FS5
+#define RX_AH0		RISCV_FS6
+#define RX_AH1		RISCV_FS7
+#define RX_AH2		RISCV_FS8
+#define RX_AH3		RISCV_FS9
+
+
 
 	
 	typedef enum
