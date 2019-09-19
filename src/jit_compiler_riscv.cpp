@@ -1234,8 +1234,10 @@ namespace randomx {
 	void JitCompilerRiscv::h_FADD_R(Instruction& instr, int i) {
 		instr.dst %= RegisterCountFlt;
 		instr.src %= RegisterCountFlt;
-		emit(REX_ADDPD);
-		emitByte(0xc0 + instr.src + 8 * instr.dst);
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FADDD, RISCV_FL0 + instr.dst, RISCV_FL0 + instr.dst, RISCV_AL0 + instr.src);
+		emit32(i32);
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FADDD, RISCV_FH0 + instr.dst, RISCV_FH0 + instr.dst, RISCV_AH0 + instr.src);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_FADD_M(Instruction& instr, int i) {
