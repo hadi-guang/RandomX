@@ -1205,9 +1205,30 @@ namespace randomx {
 	}
 
 	void JitCompilerRiscv::h_FSWAP_R(Instruction& instr, int i) {
-		emit(SHUFPD);
-		emitByte(0xc0 + 9 * instr.dst);
-		emitByte(1);
+		if (instr.dst < RegisterCountFlt)
+		{
+			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVXD_27, RISCVE7_FP_FMVXD_27, RISCV_R_S0, RISCV_FH0 + instr.dst, RISCVE2_FP_FMVXD_27);
+			emit32(i32);
+			//	fmv:	fsgnj.d rd, rs, rs
+			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FSGNJD_7, RISCVE7_FP_FSGNJD_7, RISCV_FH0 + instr.dst, RISCV_FL0 + instr.dst, RISCV_FL0 + instr.dst);
+			emit32(i32);
+			
+			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVDX_27, RISCVE7_FP_FMVDX_27, RISCV_FL0 + instr.dst, RISCV_R_S0, RISCVE2_FP_FMVDX_27);
+			emit32(i32);
+		}
+		else
+		{
+			instr.dst -= RegisterCountFlt;
+
+			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVXD_27, RISCVE7_FP_FMVXD_27, RISCV_R_S0, RISCV_EH0 + instr.dst, RISCVE2_FP_FMVXD_27);
+			emit32(i32);
+			//	fmv:	fsgnj.d rd, rs, rs
+			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FSGNJD_7, RISCVE7_FP_FSGNJD_7, RISCV_EH0 + instr.dst, RISCV_EL0 + instr.dst, RISCV_EL0 + instr.dst);
+			emit32(i32);
+			
+			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVDX_27, RISCVE7_FP_FMVDX_27, RISCV_EL0 + instr.dst, RISCV_R_S0, RISCVE2_FP_FMVDX_27);
+			emit32(i32);
+		}
 	}
 
 	void JitCompilerRiscv::h_FADD_R(Instruction& instr, int i) {

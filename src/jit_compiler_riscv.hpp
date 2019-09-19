@@ -179,6 +179,31 @@ namespace randomx {
 #define	RISCV_R_T5		(30)	
 #define	RISCV_R_T6		(31)	
 
+#define RISCV_EL0		(0)		//"el0"
+#define RISCV_EL1		(1)		//"el1"
+#define RISCV_EL2		(2)		//"el2"
+#define RISCV_EL3		(3)		//"el3"
+#define RISCV_EH0		(4)		//"eh0"
+#define RISCV_EH1		(5)		//"eh1"
+#define RISCV_EH2		(6)		//"eh2"
+#define RISCV_EH3		(7)		//"eh3"
+#define RISCV_FL0		(10)	//"fl0"
+#define RISCV_FL1		(11)	//"fl1"
+#define RISCV_FL2		(12)	//"fl2"
+#define RISCV_FL3		(13)	//"fl3"
+#define RISCV_FH0		(14)	//"fh0"
+#define RISCV_FH1		(15)	//"fh1"
+#define RISCV_FH2		(16)	//"fh2"
+#define RISCV_FH3		(17)	//"fh3"
+#define RISCV_AL0		(18)	//"al0"
+#define RISCV_AL1		(19)	//"al1"
+#define RISCV_AL2		(20)	//"al2"
+#define RISCV_AL3		(21)	//"al3"
+#define RISCV_AH0		(22)	//"ah0"
+#define RISCV_AH1		(23)	//"ah1"
+#define RISCV_AH2		(24)	//"ah2"
+#define RISCV_AH3		(25)	//"ah3"
+
 #define RISCV_FT0		(0)		//"el0"
 #define RISCV_FT1		(1)		//"el1"
 #define RISCV_FT2		(2)		//"el2"
@@ -187,10 +212,8 @@ namespace randomx {
 #define RISCV_FT5		(5)		//"eh1"
 #define RISCV_FT6		(6)		//"eh2"
 #define RISCV_FT7		(7)		//"eh3"
-
 #define RISCV_FS0		(8)
 #define RISCV_FS1		(9)
-
 #define RISCV_FA0		(10)	//"fl0"
 #define RISCV_FA1		(11)	//"fl1"
 #define RISCV_FA2		(12)	//"fl2"
@@ -199,7 +222,6 @@ namespace randomx {
 #define RISCV_FA5		(15)	//"fh1"
 #define RISCV_FA6		(16)	//"fh2"
 #define RISCV_FA7		(17)	//"fh3"
-
 #define RISCV_FS2		(18)	//"al0"
 #define RISCV_FS3		(19)	//"al1"
 #define RISCV_FS4		(20)	//"al2"
@@ -210,7 +232,6 @@ namespace randomx {
 #define RISCV_FS9		(25)	//"ah3"
 #define RISCV_FS10		(26)
 #define RISCV_FS11		(27)
-
 #define RISCV_FT8		(28)
 #define RISCV_FT9		(29)
 #define RISCV_FT10		(30)
@@ -358,9 +379,9 @@ namespace randomx {
 		RISCVF3_STOREFP_FSD= 0b011,
 //		RISCVF3_MADD_FMADD_RM=
 //		RISCVF3_FP_FADD_RM	= 0,
-		RISCVF3_FP_FSGNJ_D	=0b000,
-		RISCVF3_FP_FSGNJN_D	=0b001,
-		RISCVF3_FP_FSGNJX_D	=0b010,
+		RISCVF3_FP_FSGNJD_7	=0b000,
+		RISCVF3_FP_FSGNJND_7=0b001,
+		RISCVF3_FP_FSGNJXD_7=0b010,
 		RISCVF3_FP_FMIND	=0b000,
 		RISCVF3_FP_FMAXD	=0b001,
 #endif
@@ -376,7 +397,7 @@ namespace randomx {
 		RISCVE7_OP_SUB		= 0b0100000,
 		RISCVE7_OP_SLL		= 0b0000000,
 		RISCVE7_OP_SLT		= 0b0000000,
-		RISCVE7_OP_SLTU	= 0b0000000,
+		RISCVE7_OP_SLTU		= 0b0000000,
 		RISCVE7_OP_XOR		= 0b0000000,
 		RISCVE7_OP_SRL		= 0b0000000,
 		RISCVE7_OP_SRA		= 0b0100000,
@@ -384,17 +405,22 @@ namespace randomx {
 		RISCVE7_OP_AND		= 0b0000000,
 
 		RISCVE7_OP_MUL		= 0b0000001,
-		RISCVE7_OP_MULH	= 0b0000001,
+		RISCVE7_OP_MULH		= 0b0000001,
 		RISCVE7_OP_MULHSU	= 0b0000001,
 		RISCVE7_OP_MULHU	= 0b0000001,
 		RISCVE7_OP_DIV		= 0b0000001,
-		RISCVE7_OP_DIVU	= 0b0000001,
+		RISCVE7_OP_DIVU		= 0b0000001,
 		RISCVE7_OP_REM		= 0b0000001,
-		RISCVE7_OP_REMU	= 0b0000001,
+		RISCVE7_OP_REMU		= 0b0000001,
 
 		RISCVE7_IMM_SLLI	= 0b0000000,
 		RISCVE7_IMM_SRLI	= 0b0000000,
 		RISCVE7_IMM_SRAI	= 0b0100000,
+#if 1//RV32D
+		RISCVE7_FP_FSGNJD_7		= 0b0010001,
+		RISCVE7_FP_FSGNJND_7	= 0b0010001,
+		RISCVE7_FP_FSGNJXD_7	= 0b0010001,
+#endif
 #if 1//RV64D
 		RISCVE2_FP_FMVXD_27		= 0b00000,
 		RISCVE7_FP_FMVXD_27		= 0b1110001,
