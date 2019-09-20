@@ -1312,7 +1312,7 @@ namespace randomx {
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 		
-		// add src		
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD, RX_TMP0, RX_R0 + instr.src , RX_TMP1);
 		emit32(i32);
 		// mask
@@ -1355,8 +1355,25 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_FSCAL_R(Instruction& instr, int i) {
 		instr.dst %= RegisterCountFlt;
-		emit(REX_XORPS);
-		emitByte(0xc7 + 8 * instr.dst);
+		// FMVXD
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVXD_27, RISCVE7_FP_FMVXD_27, RX_TMP0, RX_FL0 + instr.dst, RISCVE2_FP_FMVXD_27);
+		emit32(i32);
+		// XOR
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_TMP0, RX_TMP0, RX_SCALEMASK);
+		emit32(i32);
+		// FMVDX
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVDX_27, RISCVE7_FP_FMVDX_27, RX_FL0 + instr.dst, RX_TMP0, RISCVE2_FP_FMVDX_27);
+		emit32(i32);
+
+		// FMVXD
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVXD_27, RISCVE7_FP_FMVXD_27, RX_TMP0, RX_FH0 + instr.dst, RISCVE2_FP_FMVXD_27);
+		emit32(i32);
+		// XOR
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_TMP0, RX_TMP0, RX_SCALEMASK);
+		emit32(i32);
+		// FMVDX
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVDX_27, RISCVE7_FP_FMVDX_27, RX_FH0 + instr.dst, RX_TMP0, RISCVE2_FP_FMVDX_27);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_FMUL_R(Instruction& instr, int i) {

@@ -221,6 +221,7 @@ namespace randomx {
 #define RX_L1M		RISCV_R_S1
 #define RX_L2M		RISCV_R_S2
 #define RX_L3M		RISCV_R_S3
+#define RX_SCALEMASK RISCV_R_S11
 #define RX_FTMP0	RISCV_FT8
 
 #define RX_R0		RISCV_R_A0
