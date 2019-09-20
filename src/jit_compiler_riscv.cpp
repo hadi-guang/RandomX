@@ -1379,8 +1379,12 @@ namespace randomx {
 	void JitCompilerRiscv::h_FMUL_R(Instruction& instr, int i) {
 		instr.dst %= RegisterCountFlt;
 		instr.src %= RegisterCountFlt;
-		emit(REX_MULPD);
-		emitByte(0xe0 + instr.src + 8 * instr.dst);
+		//FMUL
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FMULD, RX_EL0 + instr.dst, RX_EL0 + instr.dst, RX_AL0 + instr.src);
+		emit32(i32);
+		//FMUL
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FMULD, RX_EH0 + instr.dst, RX_EH0 + instr.dst, RX_AH0 + instr.src);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_FDIV_M(Instruction& instr, int i) {
