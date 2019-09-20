@@ -103,8 +103,8 @@ Total sum of frequencies must be 256
 //Floating point instructions
 #define RANDOMX_FREQ_FSWAP_R       16// 4
 #define RANDOMX_FREQ_FADD_R        16//16
-#define RANDOMX_FREQ_FADD_M        0// 5
-#define RANDOMX_FREQ_FSUB_R        0//16
+#define RANDOMX_FREQ_FADD_M        15// 5
+#define RANDOMX_FREQ_FSUB_R        16//16
 #define RANDOMX_FREQ_FSUB_M        0// 5
 #define RANDOMX_FREQ_FSCAL_R       0// 6
 #define RANDOMX_FREQ_FMUL_R        0//32
@@ -119,7 +119,7 @@ Total sum of frequencies must be 256
 #define RANDOMX_FREQ_ISTORE        0//16
 
 //No-op instruction
-#define RANDOMX_FREQ_NOP          95
+#define RANDOMX_FREQ_NOP          64
 /*                               ------
                                   256
 */

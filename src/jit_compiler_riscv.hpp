@@ -58,7 +58,7 @@ namespace randomx {
 	; s3  -> L3M									need save
 	; s4  -> TMP1									need save
 	; s5  -> TMP2									need save
-	; s6  -> MASK32									need save
+	; s6  -> 									need save
 	; s7  -> 	need save
 	; s8  -> E 'and' mask  =	0x00ffffffffffffff	need save
 	; s9  -> E 'or' mask low=	0x3*00000000******	need save
@@ -168,7 +168,7 @@ namespace randomx {
 #define	RISCV_R_S3		(19)	// L3M
 #define	RISCV_R_S4		(20)	// TMP1
 #define	RISCV_R_S5		(21)	// TMP2
-#define	RISCV_R_S6		(22)	// MASK32
+#define	RISCV_R_S6		(22)
 #define	RISCV_R_S7		(23)
 #define	RISCV_R_S8		(24)	// E 'and' mask
 #define	RISCV_R_S9		(25)	// E 'or' mask low
@@ -222,7 +222,6 @@ namespace randomx {
 #define RX_L2M		RISCV_R_S2
 #define RX_L3M		RISCV_R_S3
 #define RX_FTMP0	RISCV_FT8
-#define RX_MASK32	RISCV_R_S6
 
 #define RX_R0		RISCV_R_A0
 #define RX_R1		RISCV_R_A1
