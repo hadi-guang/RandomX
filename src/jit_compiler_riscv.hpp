@@ -414,10 +414,21 @@ namespace randomx {
 		RISCVF3_OP_DIVU_7	= 0b101,
 		RISCVF3_OP_REM_7	= 0b110,
 		RISCVF3_OP_REMU_7	= 0b111,
+		
 #endif
 #if 1//RV32D RV64D
 		RISCVF3_LOADFP_FLD	= 0b011,
 		RISCVF3_STOREFP_FSD= 0b011,
+
+		RISCVF3_RM_RNE		= 0b000,// round to nearst,tie to even
+		RISCVF3_RM_RTZ		= 0b001,// round towards zero
+		RISCVF3_RM_RDN		= 0b010,// round down
+		RISCVF3_RM_RUP		= 0b011,// round up
+		RISCVF3_RM_RMM		= 0b100,// round to nearst,tie to max magnitude
+		RISCVF3_RM_DYN		= 0b111,// synamic
+
+		RISCVF3_FP_FSQRTD_DYN_27= 0b111,// synamic
+		
 //		RISCVF3_MADD_FMADD_RM=
 //		RISCVF3_FP_FADD_RM	= 0,
 		RISCVF3_FP_FSGNJD_7	=0b000,
@@ -426,12 +437,7 @@ namespace randomx {
 		RISCVF3_FP_FMIND_7	=0b000,
 		RISCVF3_FP_FMAXD_7	=0b001,
 
-		RISCVF3_RM_RNE		= 0b000,// round to nearst,tie to even
-		RISCVF3_RM_RTZ		= 0b001,// round towards zero
-		RISCVF3_RM_RDN		= 0b010,// round down
-		RISCVF3_RM_RUP		= 0b011,// round up
-		RISCVF3_RM_RMM		= 0b100,// round to nearst,tie to max magnitude
-		RISCVF3_RM_DYN		= 0b111,// synamic
+
 #endif
 #if 1//RV64D
 		RISCVF3_FP_FMVXD_27	= 0b000,
@@ -481,6 +487,10 @@ namespace randomx {
 		RISCVE7_FP_FSUBD		= 0b0000101,
 		RISCVE7_FP_FMULD		= 0b0001001,
 		RISCVE7_FP_FDIVD		= 0b0001101,
+
+		RISCVE2_FP_FSQRTD_DYN_27 = 0b00000,
+		RISCVE7_FP_FSQRTD_DYN_27 = 0b0101101,
+
 #endif
 #if 1//RV64D
 		RISCVE2_FP_FMVXD_27		= 0b00000,

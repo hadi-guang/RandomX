@@ -1467,8 +1467,13 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_FSQRT_R(Instruction& instr, int i) {
 		instr.dst %= RegisterCountFlt;
-		emit(SQRTPD);
-		emitByte(0xe4 + 9 * instr.dst);
+		//FSQRT
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FSQRTD_DYN_27, RISCVE7_FP_FSQRTD_DYN_27, RX_EL0 + instr.dst, RX_EL0 + instr.dst, RISCVE2_FP_FSQRTD_DYN_27);
+		emit32(i32);
+		//FSQRT
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FSQRTD_DYN_27, RISCVE7_FP_FSQRTD_DYN_27, RX_EH0 + instr.dst, RX_EH0 + instr.dst, RISCVE2_FP_FSQRTD_DYN_27);
+		emit32(i32);
+
 	}
 
 	void JitCompilerRiscv::h_CFROUND(Instruction& instr, int i) {
