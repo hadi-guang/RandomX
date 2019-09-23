@@ -1389,11 +1389,80 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_FDIV_M(Instruction& instr, int i) {
 		instr.dst %= RegisterCountFlt;
-		genAddressReg(instr);
-		emit(REX_CVTDQ2PD_XMM12);
-		emit(REX_ANDPS_XMM12);
-		emit(REX_DIVPD);
-		emitByte(0xe4 + 8 * instr.dst);
+		imm32 = instr.getImm32();
+		// load imm32 to TMP
+		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
+		emit32(i32);
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
+		emit32(i32);
+		
+		// ADD
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD, RX_TMP0, RX_R0 + instr.src , RX_TMP1);
+		emit32(i32);
+		// mask
+		if (instr.getModMem())
+		{
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
+			emit32(i32);
+		}
+		else
+		{
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
+			emit32(i32);
+		}
+		//add scratchpad
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
+		emit32(i32);
+		// load
+		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
+		emit32(i32);
+	
+		// cvt 0
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FCVTDW, RX_FTMP0, RX_TMP0, RISCVE2_FP_FCVTDW);
+		emit32(i32);
+#if 1
+		// FMVXD
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVXD_27, RISCVE7_FP_FMVXD_27, RX_TMP1, RX_FTMP0, RISCVE2_FP_FMVXD_27);
+		emit32(i32);
+		// AND
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP1, RX_TMP1, RX_MANTISSAMASK);
+		emit32(i32);
+		// OR L
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_TMP1, RX_TMP1, RX_EXP240L);
+		emit32(i32);
+		// FMVDX
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVDX_27, RISCVE7_FP_FMVDX_27, RX_FTMP0, RX_TMP1, RISCVE2_FP_FMVDX_27);
+		emit32(i32);
+#endif	
+		//FDIV L
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FDIVD, RX_EL0 + instr.dst, RX_EL0 + instr.dst, RX_FTMP0);
+		emit32(i32);
+	
+		// SRLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SRLI << 6) + 32);
+		emit32(i32);
+	
+		// cvt 1
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FCVTDW, RX_FTMP0, RX_TMP0, RISCVE2_FP_FCVTDW);
+		emit32(i32);
+#if 1
+		// FMVXD
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVXD_27, RISCVE7_FP_FMVXD_27, RX_TMP1, RX_FTMP0, RISCVE2_FP_FMVXD_27);
+		emit32(i32);
+		// AND
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP1, RX_TMP1, RX_MANTISSAMASK);
+		emit32(i32);
+		// OR H
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_TMP1, RX_TMP1, RX_EXP240H);
+		emit32(i32);
+		// FMVDX
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVDX_27, RISCVE7_FP_FMVDX_27, RX_FTMP0, RX_TMP1, RISCVE2_FP_FMVDX_27);
+		emit32(i32);
+#endif	
+		//FDIV H
+		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FDIVD, RX_EH0 + instr.dst, RX_EH0 + instr.dst, RX_FTMP0);
+		emit32(i32);
+
 	}
 
 	void JitCompilerRiscv::h_FSQRT_R(Instruction& instr, int i) {

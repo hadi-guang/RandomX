@@ -221,6 +221,15 @@ namespace randomx {
 #define RX_L1M		RISCV_R_S1
 #define RX_L2M		RISCV_R_S2
 #define RX_L3M		RISCV_R_S3
+
+
+#define	RISCV_R_S8		(24)	// E 'and' mask
+#define	RISCV_R_S9		(25)	// E 'or' mask low
+#define	RISCV_R_S10		(26)	// E 'or' mask high
+
+#define RX_MANTISSAMASK	RISCV_R_S8
+#define RX_EXP240L		RISCV_R_S9
+#define RX_EXP240H		RISCV_R_S10
 #define RX_SCALEMASK RISCV_R_S11
 #define RX_FTMP0	RISCV_FT8
 
