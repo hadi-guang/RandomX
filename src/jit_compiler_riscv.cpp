@@ -1477,14 +1477,65 @@ namespace randomx {
 	}
 
 	void JitCompilerRiscv::h_CFROUND(Instruction& instr, int i) {
-		emit(REX_MOV_RR64);
-		emitByte(0xc0 + instr.src);
-		int rotate = (13 - (instr.getImm32() & 63)) & 63;
-		if (rotate != 0) {
-			emit(ROL_RAX);
-			emitByte(rotate);
-		}
-		emit(AND_OR_MOV_LDMXCSR);
+
+
+		imm32 = instr.getImm32();
+		// mask
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RISCV_R_ZERO, (imm32) & 63);
+		emit32(i32);
+		//ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 64);
+		emit32(i32);
+
+		//SUB
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB_7, RISCVE7_OP_SUB, RX_TMP1, RX_TMP1, RX_TMP0);
+		emit32(i32);
+
+		// SRL
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SRL_7, RISCVE7_OP_SRL, RX_TMP0, RX_R0 + instr.src, RX_TMP0);
+		emit32(i32);
+
+		// SLL
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SLL_7, RISCVE7_OP_SLL, RX_TMP1, RX_R0 + instr.src, RX_TMP1);
+		emit32(i32);
+
+		// OR
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_TMP0, RX_TMP0, RX_TMP1);
+		emit32(i32);
+
+		// ANDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ANDI, RX_TMP0, RX_TMP0, 3);
+		emit32(i32);
+
+		// RX_TMP1 = 4
+		//ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 4);
+		emit32(i32);
+
+		//BRANCH
+		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BEQ,RX_TMP0,RISCV_R_ZERO,4+4);
+		emit32(i32);
+
+		//ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_TMP0, 1);
+		emit32(i32);
+
+		//BRANCH RX_TMP1 != 4
+		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BNE,RX_TMP0,RX_TMP1,4+4);
+		emit32(i32);
+
+		//ADDI RX_TMP0 = 1
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RISCV_R_ZERO, 1);
+		emit32(i32);
+
+
+		//WRITE FRM
+		i32 = mk_I(RISCVOP_SYSTEM_I, RISCVF3_SYSTEM_CSRRW_7, RISCV_R_ZERO, RX_TMP0, RISCVE7_SYSTEM_CSR_FRM);
+		emit32(i32);
+	
+		// READ FRM
+//		i32 = mk_I(RISCVOP_SYSTEM_I, RISCVF3_SYSTEM_CSRRS_7, RX_R1, RISCV_R_ZERO, RISCVE7_SYSTEM_CSR_FRM);
+//		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_CBRANCH(Instruction& instr, int i) {

@@ -82,7 +82,7 @@ Total sum of frequencies must be 256
 */
 
 //Integer instructions
-#define RANDOMX_FREQ_IADD_RS       25//25
+#define RANDOMX_FREQ_IADD_RS       0//25
 #define RANDOMX_FREQ_IADD_M        7// 7
 #define RANDOMX_FREQ_ISUB_R        16//16
 #define RANDOMX_FREQ_ISUB_M        7// 7
@@ -113,7 +113,7 @@ Total sum of frequencies must be 256
 
 //Control instructions
 #define RANDOMX_FREQ_CBRANCH       0//16
-#define RANDOMX_FREQ_CFROUND       0// 1
+#define RANDOMX_FREQ_CFROUND       25// 1
 
 //Store instruction
 #define RANDOMX_FREQ_ISTORE        0//16
