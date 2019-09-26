@@ -1618,10 +1618,44 @@ namespace randomx {
 	}
 
 	void JitCompilerRiscv::h_ISTORE(Instruction& instr, int i) {
-		genAddressRegDst(instr);
-		emit(REX_MOV_MR);
-		emitByte(0x04 + 8 * instr.src);
-		emitByte(0x06);
+		imm32 = instr.getImm32();
+		// load imm32 to TMP
+		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
+		emit32(i32);
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
+		emit32(i32);
+
+		// add dst
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_R0 + instr.dst, RX_TMP1);
+		emit32(i32);
+		
+		if (instr.getModCond() < StoreL3Condition)
+		{
+			// mask
+			if (instr.getModMem())
+			{
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
+				emit32(i32);
+			}
+			else
+			{
+				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
+				emit32(i32);
+			}
+		}
+		else
+		{
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L3M);
+			emit32(i32);
+		}
+		//add scratchpad
+		// ADD
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
+		emit32(i32);
+		//store
+		// STORE
+		i32 = mk_S(RISCVOP_STORE_S, RISCVF3_STORE_SD, RX_TMP0, RX_R0 + instr.src, 0);
+		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_NOP(Instruction& instr, int i) {
