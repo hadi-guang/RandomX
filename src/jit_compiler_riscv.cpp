@@ -1512,6 +1512,7 @@ namespace randomx {
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 4);
 		emit32(i32);
 
+		// if RX_TMP0> 0 RX_TMP0++
 		//BRANCH
 		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BEQ,RX_TMP0,RISCV_R_ZERO,4+4);
 		emit32(i32);
@@ -1520,6 +1521,7 @@ namespace randomx {
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_TMP0, 1);
 		emit32(i32);
 
+		// if RX_TMP0== RX_TMP1   RX_TMP0 = 1
 		//BRANCH RX_TMP1 != 4
 		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BNE,RX_TMP0,RX_TMP1,4+4);
 		emit32(i32);
@@ -1541,18 +1543,74 @@ namespace randomx {
 	void JitCompilerRiscv::h_CBRANCH(Instruction& instr, int i) {
 		int reg = instr.dst;
 		int target = registerUsage[reg] + 1;
-		emit(REX_ADD_I);
-		emitByte(0xc0 + reg);
+
+		imm32 = instr.getImm32();
+		// load imm32 to TMP
+		// LUI
+		i32 = mk_U(RISCVOP_LUI_U,RX_TMP0, gen_hi(imm32));
+		emit32(i32);
+		// ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_TMP0, gen_lo(imm32));
+		emit32(i32);
+
 		int shift = instr.getModCond() + ConditionOffset;
-		uint32_t imm = instr.getImm32() | (1UL << shift);
-		if (ConditionOffset > 0 || shift > 0)
-			imm &= ~(1UL << (shift - 1));
-		emit32(imm);
-		emit(REX_TEST);
-		emitByte(0xc0 + reg);
-		emit32(ConditionMask << shift);
-		emit(JZ);
-		emit32(instructionOffsets[target] - (codePos + 4));
+		// ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 1);
+		emit32(i32);
+		// SLLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_TMP1, RX_TMP1, (RISCVE6_IMM_SLLI << 6) + shift);
+		emit32(i32);
+
+		// OR
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_TMP0, RX_TMP0, RX_TMP1);
+		emit32(i32);
+		
+		if (ConditionOffset > 0 || shift > 0) //clear the bit below the condition mask - this limits the number of successive jumps to 2
+		{
+			// SRLI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RX_TMP1, RX_TMP1, (RISCVE6_IMM_SRLI << 6) + 1);
+			emit32(i32);
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, 1);
+			emit32(i32);
+			// SUB
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB_7, RISCVE7_OP_SUB, RX_TMP1, RISCV_R_ZERO, RX_TMP1);
+			emit32(i32);
+
+			// AND
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_TMP1);
+			emit32(i32);			
+		}
+
+		// ADD
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
+		emit32(i32);
+
+		// jump test
+
+		// load ConditionMask to TMP
+		// LUI
+		i32 = mk_U(RISCVOP_LUI_U,RX_TMP0, gen_hi(ConditionMask));
+		emit32(i32);
+		// ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_TMP0, gen_lo(ConditionMask));
+		emit32(i32);
+
+		// SLLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SLLI << 6) + shift);
+		emit32(i32);
+		// AND
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_R0 + instr.dst, RX_TMP0);
+		emit32(i32);
+
+		//BRANCH RX_TMP0 != 0
+		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BNE,RX_TMP0,RISCV_R_ZERO,4+4);
+		emit32(i32);
+
+		// JUMP
+		i32 = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,instructionOffsets[target] - codePos);
+		emit32(i32);
+
 		//mark all registers as used
 		for (unsigned j = 0; j < RegistersCount; ++j) {
 			registerUsage[j] = i;
