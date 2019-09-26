@@ -56,10 +56,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RANDOMX_PROGRAM_SIZE       256
 
 //Number of iterations during VM execution.
-#define RANDOMX_PROGRAM_ITERATIONS 32768
+#define RANDOMX_PROGRAM_ITERATIONS 2048
 
 //Number of chained VM executions per hash.
-#define RANDOMX_PROGRAM_COUNT      1
+#define RANDOMX_PROGRAM_COUNT      8
 
 //Scratchpad L3 size in bytes. Must be a power of 2.
 #define RANDOMX_SCRATCHPAD_L3      2097152
@@ -82,44 +82,44 @@ Total sum of frequencies must be 256
 */
 
 //Integer instructions
-#define RANDOMX_FREQ_IADD_RS       0//25
-#define RANDOMX_FREQ_IADD_M        7// 7
-#define RANDOMX_FREQ_ISUB_R        16//16
-#define RANDOMX_FREQ_ISUB_M        7// 7
-#define RANDOMX_FREQ_IMUL_R        16//16
-#define RANDOMX_FREQ_IMUL_M        4// 4
-#define RANDOMX_FREQ_IMULH_R       4// 4
-#define RANDOMX_FREQ_IMULH_M       1// 1
-#define RANDOMX_FREQ_ISMULH_R      4// 4
-#define RANDOMX_FREQ_ISMULH_M      1// 1
-#define RANDOMX_FREQ_IMUL_RCP      8// 8
-#define RANDOMX_FREQ_INEG_R        2// 2
-#define RANDOMX_FREQ_IXOR_R        15//15
-#define RANDOMX_FREQ_IXOR_M        5// 5
-#define RANDOMX_FREQ_IROR_R        8// 8
-#define RANDOMX_FREQ_IROL_R        2// 2
-#define RANDOMX_FREQ_ISWAP_R       4// 4
+#define RANDOMX_FREQ_IADD_RS       25
+#define RANDOMX_FREQ_IADD_M         7
+#define RANDOMX_FREQ_ISUB_R        16
+#define RANDOMX_FREQ_ISUB_M         7
+#define RANDOMX_FREQ_IMUL_R        16
+#define RANDOMX_FREQ_IMUL_M         4
+#define RANDOMX_FREQ_IMULH_R        4
+#define RANDOMX_FREQ_IMULH_M        1
+#define RANDOMX_FREQ_ISMULH_R       4
+#define RANDOMX_FREQ_ISMULH_M       1
+#define RANDOMX_FREQ_IMUL_RCP       8
+#define RANDOMX_FREQ_INEG_R         2
+#define RANDOMX_FREQ_IXOR_R        15
+#define RANDOMX_FREQ_IXOR_M         5
+#define RANDOMX_FREQ_IROR_R         8
+#define RANDOMX_FREQ_IROL_R         2
+#define RANDOMX_FREQ_ISWAP_R        4
 
 //Floating point instructions
-#define RANDOMX_FREQ_FSWAP_R       16// 4
-#define RANDOMX_FREQ_FADD_R        16//16
-#define RANDOMX_FREQ_FADD_M        15// 5
-#define RANDOMX_FREQ_FSUB_R        16//16
-#define RANDOMX_FREQ_FSUB_M        16// 5
-#define RANDOMX_FREQ_FSCAL_R       16// 6
-#define RANDOMX_FREQ_FMUL_R        0//32
-#define RANDOMX_FREQ_FDIV_M        0// 4
-#define RANDOMX_FREQ_FSQRT_R       32// 6
+#define RANDOMX_FREQ_FSWAP_R        4
+#define RANDOMX_FREQ_FADD_R        16
+#define RANDOMX_FREQ_FADD_M         5
+#define RANDOMX_FREQ_FSUB_R        16
+#define RANDOMX_FREQ_FSUB_M         5
+#define RANDOMX_FREQ_FSCAL_R        6
+#define RANDOMX_FREQ_FMUL_R        32
+#define RANDOMX_FREQ_FDIV_M         4
+#define RANDOMX_FREQ_FSQRT_R        6
 
 //Control instructions
-#define RANDOMX_FREQ_CBRANCH       0//16
-#define RANDOMX_FREQ_CFROUND       0// 1
+#define RANDOMX_FREQ_CBRANCH       16
+#define RANDOMX_FREQ_CFROUND        1
 
 //Store instruction
-#define RANDOMX_FREQ_ISTORE        25//16
+#define RANDOMX_FREQ_ISTORE        16
 
 //No-op instruction
-#define RANDOMX_FREQ_NOP          0
+#define RANDOMX_FREQ_NOP            0
 /*                               ------
                                   256
 */
