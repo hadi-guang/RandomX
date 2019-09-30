@@ -54,7 +54,7 @@ namespace randomx {
 
 	template<class Allocator, bool softAes>
 	void InterpretedVm<Allocator, softAes>::execute() {
-		printf("ma:%d mx:%d\n",mem.ma,mem.mx);
+		printf("ma:0x%x mx:0x%x\n",mem.ma,mem.mx);
 		printf("RANDOMX_PROGRAM_ITERATIONS:%d\n",RANDOMX_PROGRAM_ITERATIONS);
 		NativeRegisterFile nreg;
 

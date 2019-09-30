@@ -400,23 +400,34 @@ namespace randomx {
 	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
 		printf("[%s][%d] eMask[0]0x%x eMask[1]0x%x\n",__func__,__LINE__,pcfg.eMask[0],pcfg.eMask[1]);
 		printf("[%s][%d]readReg0:0x%x readReg1:0x%x readReg2:0x%x readReg3:0x%x\n",__func__,__LINE__,pcfg.readReg0,pcfg.readReg1,pcfg.readReg2,pcfg.readReg3);
-
+		// program_prologue.inc
+		// 
 		generateProgramPrologue(prog, pcfg);
-#if 0
+#if 1
 		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize);
-		emit(ADD_EBX_I);
-		emit32(datasetOffset / CacheLineSize);
-		emitByte(CALL);
-		emit32(superScalarHashOffset - (codePos + 4));
+
+		// call superScalarHashOffset
+		// JAL
+		i32 = mk_J(RISCVOP_JAL_J, RISCV_R_RA, superScalarHashOffset - codePos);
+		emit32(i32);
+
 		emit(codeReadDatasetLightSshFin, readDatasetLightFinSize);
 #endif
 		generateProgramEpilogue(prog);
+		if (codePos > CodeSize)
+		{
+			printf("code pos too long!!!!!!!!\n");
+		}
+		printf("code size:%d buffersize:%d\n",codePos ,CodeSize);
 	}
 
 	template<size_t N>
 	void JitCompilerRiscv::generateSuperscalarHash(SuperscalarProgram(&programs)[N], std::vector<uint64_t> &reciprocalCache) {
+		// program_read_dataset_sshash_init.inc
 		memcpy(code + superScalarHashOffset, codeShhInit, codeSshInitSize);
 		codePos = superScalarHashOffset + codeSshInitSize;
+#if 0
+
 		for (unsigned j = 0; j < N; ++j) {
 			SuperscalarProgram& prog = programs[j];
 			for (unsigned i = 0; i < prog.getSize(); ++i) {
@@ -439,7 +450,11 @@ namespace randomx {
 #endif
 			}
 		}
-		emitByte(RET);
+#endif
+		// ret
+		// JALR
+		i32 = mk_I(RISCVOP_JALR_I, RISCVF3_JALR_JALR, RISCV_R_ZERO, RISCV_R_RA, 0);
+		emit32(i32);
 	}
 
 	template
@@ -472,7 +487,7 @@ namespace randomx {
 		{
 			rs1 = RX_R1;
 		}
-		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RISCV_R_T4,RISCV_R_T4,rs1);
+		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs1);
 		emit32(v);
 		if (pcfg.readReg1 == 2)
 		{
@@ -482,7 +497,7 @@ namespace randomx {
 		{
 			rs2 = RX_R3;
 		}
-		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RISCV_R_T4,RISCV_R_T4,rs2);
+		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs2);
 		emit32(v);
 
 		//	spAddr0 &= ScratchpadL3Mask64;

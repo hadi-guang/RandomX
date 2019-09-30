@@ -58,8 +58,8 @@ namespace randomx {
 	; s3  -> L3M									need save
 	; s4  -> TMP1									need save
 	; s5  -> TMP2									need save
-	; s6  -> 									need save
-	; s7  -> 	need save
+	; s6  -> 										need save
+	; s7  -> 										need save
 	; s8  -> E 'and' mask  =	0x00ffffffffffffff	need save
 	; s9  -> E 'or' mask low=	0x3*00000000******	need save
 	; s10 -> E 'or' mask high=	0x3*00000000******	need save
@@ -154,8 +154,8 @@ namespace randomx {
 #define	RISCV_R_T0		(5)		//	regfile
 #define	RISCV_R_T1		(6)		//memory registers "ma" (high 32 bits), "mx" (low 32 bits)
 #define	RISCV_R_T2		(7)		//scratchpad pointer
-#define	RISCV_R_S0		(8)		// TMP0
-#define	RISCV_R_S1		(9)		// L1M
+#define	RISCV_R_S0		(8)		// TMP0									need save
+#define	RISCV_R_S1		(9)		// L1M									need save
 #define	RISCV_R_A0		(10)	// r0 - r7
 #define	RISCV_R_A1		(11)	// r0 - r7
 #define	RISCV_R_A2		(12)	// r0 - r7
@@ -164,20 +164,20 @@ namespace randomx {
 #define	RISCV_R_A5		(15)	// r0 - r7
 #define	RISCV_R_A6		(16)	// r0 - r7
 #define	RISCV_R_A7		(17)	// r0 - r7
-#define	RISCV_R_S2		(18)	// L2M
-#define	RISCV_R_S3		(19)	// L3M
-#define	RISCV_R_S4		(20)	// TMP1
-#define	RISCV_R_S5		(21)	// TMP2
-#define	RISCV_R_S6		(22)
-#define	RISCV_R_S7		(23)
-#define	RISCV_R_S8		(24)	// E 'and' mask
-#define	RISCV_R_S9		(25)	// E 'or' mask low
-#define	RISCV_R_S10		(26)	// E 'or' mask high
-#define	RISCV_R_S11		(27)	// scale mask
+#define	RISCV_R_S2		(18)	// L2M									need save
+#define	RISCV_R_S3		(19)	// L3M									need save
+#define	RISCV_R_S4		(20)	// TMP1									need save
+#define	RISCV_R_S5		(21)	// TMP2									need save
+#define	RISCV_R_S6		(22)	// superscalar itemNumber				need save
+#define	RISCV_R_S7		(23)	//										need save
+#define	RISCV_R_S8		(24)	// E 'and' mask							need save
+#define	RISCV_R_S9		(25)	// E 'or' mask low						need save
+#define	RISCV_R_S10		(26)	// E 'or' mask high						need save
+#define	RISCV_R_S11		(27)	// scale mask = 0x81f0000000000000		need save
 #define	RISCV_R_T3		(28)	//program_iterations
-#define	RISCV_R_T4		(29)
-#define	RISCV_R_T5		(30)
-#define	RISCV_R_T6		(31)
+#define	RISCV_R_T4		(29)	//registers	"spAddr1" (high 32 bits), "spAddr0" (low 32 bits)
+#define	RISCV_R_T5		(30)	//RANDOMX_SCRATCHPAD_MASK << 32 + RANDOMX_SCRATCHPAD_MASK
+#define	RISCV_R_T6		(31)	//dataset pointer
 
 #define RISCV_FT0		(0)		//"el0"
 #define RISCV_FT1		(1)		//"el1"
@@ -197,16 +197,16 @@ namespace randomx {
 #define RISCV_FA5		(15)	//"fh1"
 #define RISCV_FA6		(16)	//"fh2"
 #define RISCV_FA7		(17)	//"fh3"
-#define RISCV_FS2		(18)	//"al0"
-#define RISCV_FS3		(19)	//"al1"
-#define RISCV_FS4		(20)	//"al2"
-#define RISCV_FS5		(21)	//"al3"
-#define RISCV_FS6		(22)	//"ah0"
-#define RISCV_FS7		(23)	//"ah1"
-#define RISCV_FS8		(24)	//"ah2"
-#define RISCV_FS9		(25)	//"ah3"
-#define RISCV_FS10		(26)
-#define RISCV_FS11		(27)
+#define RISCV_FS2		(18)	//"al0"		need save
+#define RISCV_FS3		(19)	//"al1"		need save
+#define RISCV_FS4		(20)	//"al2"		need save
+#define RISCV_FS5		(21)	//"al3"		need save
+#define RISCV_FS6		(22)	//"ah0"		need save
+#define RISCV_FS7		(23)	//"ah1"		need save
+#define RISCV_FS8		(24)	//"ah2"		need save
+#define RISCV_FS9		(25)	//"ah3"		need save
+#define RISCV_FS10		(26)	//			need save
+#define RISCV_FS11		(27)	//			need save
 #define RISCV_FT8		(28)	// FTMP0
 #define RISCV_FT9		(29)
 #define RISCV_FT10		(30)
@@ -215,6 +215,7 @@ namespace randomx {
 
 #define RX_SCRATCGPAD			RISCV_R_T2
 #define RX_PROGRAM_ITERATION	RISCV_R_T3
+#define RX_SPADDR				RISCV_R_T4
 #define RX_TMP0		RISCV_R_S0
 #define RX_TMP1		RISCV_R_S4
 #define RX_TMP2		RISCV_R_S5
@@ -222,16 +223,14 @@ namespace randomx {
 #define RX_L2M		RISCV_R_S2
 #define RX_L3M		RISCV_R_S3
 
-
-#define	RISCV_R_S8		(24)	// E 'and' mask
-#define	RISCV_R_S9		(25)	// E 'or' mask low
-#define	RISCV_R_S10		(26)	// E 'or' mask high
-
 #define RX_MANTISSAMASK	RISCV_R_S8
 #define RX_EXP240L		RISCV_R_S9
 #define RX_EXP240H		RISCV_R_S10
 #define RX_SCALEMASK RISCV_R_S11
 #define RX_FTMP0	RISCV_FT8
+
+//superscalar
+#define	RX_SS_ITEMNUMBER	RISCV_R_S6
 
 #define RX_R0		RISCV_R_A0
 #define RX_R1		RISCV_R_A1
@@ -403,7 +402,8 @@ namespace randomx {
 		RISCVF3_IMM_SLLI_6	= 0b001,
 		RISCVF3_IMM_SRLI_6	= 0b101,
 		RISCVF3_IMM_SRAI_6	= 0b101,
-
+		
+		RISCVF3_IMM32_ADDIW	= 0b000,
 #endif
 #if 1 //zifencei
 		RISCVF3_MISCMEM_FENCEI= 0b001,

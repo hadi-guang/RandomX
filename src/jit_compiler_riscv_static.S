@@ -68,14 +68,14 @@
 .balign 64
 DECL(randomx_program_prologue):
 	#include "riscv/program_prologue.inc"
-# load const
+;# load const
 curip:
 	auipc	s4, %pcrel_hi(mantissaMask)
 	addi	s4, s4, %pcrel_lo(curip)
 	ld s8,		(0x00)(s4)	# load E 'and' mask
 	ld s9,		0x10(s4)	# load E 'or' mask lo
 	ld s10,		0x18(s4)	# load E 'or' mask hi
-	ld s11,		0x20(s4)	# load scale mask
+	ld s11,		0x08(s4)	# load scale mask
 	j DECL(randomx_program_loop_begin)
 
 .balign 64
@@ -95,10 +95,10 @@ DECL(randomx_program_read_dataset):
 #	#include "asm/program_read_dataset.inc"
 
 DECL(randomx_program_read_dataset_sshash_init):
-#	#include "asm/program_read_dataset_sshash_init.inc"
+	#include "riscv/program_read_dataset_sshash_init.inc"
 
 DECL(randomx_program_read_dataset_sshash_fin):
-#	#include "asm/program_read_dataset_sshash_fin.inc"
+	#include "riscv/program_read_dataset_sshash_fin.inc"
 
 DECL(randomx_program_loop_store):
 	#include "riscv/program_loop_store.inc"

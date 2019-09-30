@@ -9,17 +9,17 @@
 	fsd	fs8,	0x30(sp)
 	fsd	fs9,	0x38(sp)
 
-	sd	s0,	0x40(sp)
-	sd	s1,	0x60(sp)
-	sd	s2,	0x68(sp)
-	sd	s3,	0x70(sp)
-	sd	s4,	0x78(sp)
-	sd	s5,	0x80(sp)
+	sd	s0,		0x40(sp)
+	sd	s1,		0x60(sp)
+	sd	s2,		0x68(sp)
+	sd	s3,		0x70(sp)
+	sd	s4,		0x78(sp)
+	sd	s5,		0x80(sp)
 	
-	sd	s6,	0x88(sp)
-	sd	s7,	0x90(sp)
-	sd	s8,	0x98(sp)
-	sd	s9,	0xA0(sp)
+	sd	s6,		0x88(sp)
+	sd	s7,		0x90(sp)
+	sd	s8,		0x98(sp)
+	sd	s9,		0xA0(sp)
 	sd	s10,	0xA8(sp)
 	sd	s11,	0xB0(sp)
 
@@ -76,7 +76,7 @@
 #	fld 	ft6,	0xA8(t0)
 #	fld 	ft3,	0xB0(t0)
 #	fld 	ft7,	0xB8(t0)
-	#load a0-a3
+	#load a0-a3	from regfile
 	fld 	fs2,	0xC0(t0)	;# a0 - a3
 	fld 	fs6,	0xC8(t0)
 	fld 	fs3,	0xD0(t0)
