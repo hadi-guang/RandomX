@@ -213,6 +213,7 @@ namespace randomx {
 #define RISCV_FT11		(31)
 
 
+#define	RX_MAMX		RISCV_R_T1
 #define RX_SCRATCGPAD			RISCV_R_T2
 #define RX_PROGRAM_ITERATION	RISCV_R_T3
 #define RX_SPADDR				RISCV_R_T4

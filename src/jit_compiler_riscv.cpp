@@ -405,6 +405,10 @@ namespace randomx {
 		generateProgramPrologue(prog, pcfg);
 #if 1
 		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize);
+//		emit(ADD_EBX_I);
+//		emit32(datasetOffset / CacheLineSize);
+//		emitByte(CALL);
+//		emit32(superScalarHashOffset - (codePos + 4));
 
 		printf("RX_SS_ITEMNUMBER:0x%x\n",datasetOffset / CacheLineSize);
 		// LUI
@@ -443,6 +447,20 @@ namespace randomx {
 
 		emit(codeReadDatasetLightSshFin, readDatasetLightFinSize);
 #endif
+		//swap ma mx
+		// MVW
+		i32 = mk_I(RISCVOP_IMM32_I, RISCVF3_IMM32_ADDIW, RX_TMP0, RISCV_R_T1, 0);
+		emit32(i32);
+		// SRLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RISCV_R_T1, RISCV_R_T1, (RISCVE6_IMM_SRLI << 6) + 32);
+		emit32(i32);
+		// SLLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SLLI << 6) + 32);
+		emit32(i32);
+		// OR
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RISCV_R_T1, RISCV_R_T1, RX_TMP0);
+		emit32(i32);
+
 		generateProgramEpilogue(prog);
 		if (codePos > CodeSize)
 		{
@@ -549,12 +567,73 @@ namespace randomx {
 			generateCode(instr, i);
 		}
 #if 1 //randomx
-		//TODO
+//		mem.mx ^= nreg.r[config.readReg2] ^ nreg.r[config.readReg3];
+//		mem.mx &= CacheLineAlignMask;
+		// get mx
+		// ADDIW
+		i32 = mk_I(RISCVOP_IMM32_I, RISCVF3_IMM32_ADDIW, RX_TMP0, RX_MAMX, 0);
+		emit32(i32);
+
+		// clean mx
+		//SRLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RX_MAMX, RX_MAMX, (RISCVE6_IMM_SRLI << 6) + 32);
+		emit32(i32);
+		//SLLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_MAMX, RX_MAMX, (RISCVE6_IMM_SLLI << 6) + 32);
+		emit32(i32);
+
+		if (pcfg.readReg2 == 4)
+		{
+			rs1 = RX_R4;
+		}
+		else//1
+		{
+			rs1 = RX_R5;
+		}
+		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_TMP0,RX_TMP0,rs1);
+		emit32(v);
+
+		if (pcfg.readReg3 == 6)
+		{
+			rs2 = RX_R6;
+		}
+		else//3
+		{
+			rs2 = RX_R7;
+		}
+		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_TMP0,RX_TMP0,rs2);
+		emit32(v);
+		
+		//load CacheLineAlignMask
+		// LUI
+		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(CacheLineAlignMask));
+		emit32(i32);
+		// ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(CacheLineAlignMask));
+		emit32(i32);
+
+		//AND
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_TMP1);
+		emit32(i32);
+		
+		// clean ma
+		//SLLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SLLI << 6) + 32);
+		emit32(i32);
+		//SRLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SRLI << 6) + 32);
+		emit32(i32);
+
+		// set mx
+		//OR
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_MAMX, RX_MAMX, RX_TMP0);
+		emit32(i32);
+
 #else
-		emit(REX_MOV_RR);
-		emitByte(0xc0 + pcfg.readReg2);
-		emit(REX_XOR_EAX);
-		emitByte(0xc0 + pcfg.readReg3);
+//		emit(REX_MOV_RR);
+//		emitByte(0xc0 + pcfg.readReg2);
+//		emit(REX_XOR_EAX);
+//		emitByte(0xc0 + pcfg.readReg3);
 #endif
 	}
 
