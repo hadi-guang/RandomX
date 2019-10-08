@@ -406,6 +406,36 @@ namespace randomx {
 #if 1
 		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize);
 
+		printf("RX_SS_ITEMNUMBER:0x%x\n",datasetOffset / CacheLineSize);
+		// LUI
+		i32 = mk_U(RISCVOP_LUI_U,RX_SS_ITEMNUMBER, gen_hi(datasetOffset));
+		emit32(i32);
+		// ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_SS_ITEMNUMBER, RX_SS_ITEMNUMBER, gen_lo(datasetOffset));
+		emit32(i32);
+		// get ma
+		// SRLI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RX_TMP0, RISCV_R_T1, (RISCVE6_IMM_SRLI << 6) + 32);
+		emit32(i32);
+
+		// ADD
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD, RX_SS_ITEMNUMBER, RX_SS_ITEMNUMBER , RX_TMP0);
+		emit32(i32);
+
+		// get CacheLineSize
+		// LUI
+		i32 = mk_U(RISCVOP_LUI_U,RX_TMP0, gen_hi(CacheLineSize));
+		emit32(i32);
+		// ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_TMP0, gen_lo(CacheLineSize));
+		emit32(i32);
+
+		// ITEMNUMBER = (datasetOffset + ma)  / CacheLineSize
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_DIVU_7, RISCVE7_OP_DIVU, RX_SS_ITEMNUMBER, RX_SS_ITEMNUMBER, RX_TMP0);
+		emit32(i32);
+
+		
+		
 		// call superScalarHashOffset
 		// JAL
 		i32 = mk_J(RISCVOP_JAL_J, RISCV_R_RA, superScalarHashOffset - codePos);
@@ -544,11 +574,11 @@ namespace randomx {
 	memcpy(code + codePos, codeLoopStore, loopStoreSize);
 	codePos += loopStoreSize;
 
-	// jump to prologue
+	// jump to prologue next loop
 	v = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,prologueSize - codePos);
 	emit32(v);
 
-	// exit:
+	// exit: loop end
 	memcpy(code + codePos, codeLoopStoreLast, loopStoreLastSize);
 	codePos += loopStoreLastSize;
 	

@@ -87,8 +87,8 @@ namespace randomx {
 //			mem.mx ^= nreg.r[config.readReg2] ^ nreg.r[config.readReg3];
 //			mem.mx &= CacheLineAlignMask;
 //			datasetPrefetch(datasetOffset + mem.mx);
-//			datasetRead(datasetOffset + mem.ma, nreg.r);
-			std::swap(mem.mx, mem.ma);
+			datasetRead(datasetOffset + mem.ma, nreg.r);
+//			std::swap(mem.mx, mem.ma);
 
 			for (unsigned i = 0; i < RegistersCount; ++i)
 				store64(scratchpad + spAddr1 + 8 * i, nreg.r[i]);

@@ -43,9 +43,13 @@ namespace randomx {
 		int_reg_t rl[8];
 		
 		initDatasetItem(cachePtr, (uint8_t*)rl, itemNumber);
-
+#if 0
 		for (unsigned q = 0; q < 8; ++q)
 			r[q] ^= rl[q];
+#else
+		for (unsigned q = 0; q < 8; ++q)
+			r[q] = rl[q];
+#endif
 	}
 
 	template class InterpretedLightVm<AlignedAllocator<CacheLineSize>, false>;

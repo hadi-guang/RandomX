@@ -183,25 +183,68 @@ DECL(randomx_sshash_end):
 DECL(randomx_sshash_init):
 #	lea r8, [rbx+1]
 #	#include "asm/program_sshash_prefetch.inc"
-#	imul r8, qword ptr r0_mul[rip]
-#	mov r9, qword ptr r1_add[rip]
-#	xor r9, r8
-#	mov r10, qword ptr r2_add[rip]
-#	xor r10, r8
-#	mov r11, qword ptr r3_add[rip]
-#	xor r11, r8
-#	mov r12, qword ptr r4_add[rip]
-#	xor r12, r8
-#	mov r13, qword ptr r5_add[rip]
-#	xor r13, r8
-#	mov r14, qword ptr r6_add[rip]
-#	xor r14, r8
-#	mov r15, qword ptr r7_add[rip]
-#	xor r15, r8
-#	jmp DECL(randomx_program_end)
+
+;#	ITEMNUMBER + 1 -> TMP0
+	addi	s0,	s6,	1
+curip1:
+;#	ptr -> TMP2
+	auipc	s5, %pcrel_hi(r0_mul)
+	addi	s5, s5, %pcrel_lo(curip1)
+
+;#	load r0_mul -> TMP1
+	ld s4,		(0x00)(s5)
+
+;#	TMP0 = (itemNumber + 1) * superscalarMul0;
+;#	rl[0] = TMP0
+	mul 	s0,	s0,	s4
+	mv	a0,	s0
+
+;#	load r1_add -> TMP1
+	ld s4,		(0x08)(s5)
+
+;#	rl[1] = rl[0] ^ superscalarAdd1;
+	xor	a1,	a0,	s4
+
+;#	load r2_add -> TMP1
+	ld s4,		(0x10)(s5)
+
+;#	rl[2] = rl[0] ^ superscalarAdd2;
+	xor	a2,	a0,	s4
+
+;#	load r3_add -> TMP1
+	ld s4,		(0x18)(s5)
+
+;#	rl[3] = rl[0] ^ superscalarAdd3;
+	xor	a3,	a0,	s4
+
+;#	load r4_add -> TMP1
+	ld s4,		(0x20)(s5)
+
+;#	rl[4] = rl[0] ^ superscalarAdd4;
+	xor	a4,	a0,	s4
+
+;#	load r5_add -> TMP1
+	ld s4,		(0x28)(s5)
+
+;#	rl[5] = rl[0] ^ superscalarAdd5;
+	xor	a5,	a0,	s4
+
+;#	load r6_add -> TMP1
+	ld s4,		(0x30)(s5)
+
+;#	rl[6] = rl[0] ^ superscalarAdd6;
+	xor	a6,	a0,	s4
+
+;#	load r7_add -> TMP1
+	ld s4,		(0x38)(s5)
+
+;#	rl[7] = rl[0] ^ superscalarAdd7;
+	xor	a7,	a0,	s4
+
+	j DECL(randomx_program_end)
 
 .balign 64
-#	#include "asm/program_sshash_constants.inc"
+	#include "riscv/program_sshash_constants.inc"
 	
 .balign 64
 DECL(randomx_program_end):
