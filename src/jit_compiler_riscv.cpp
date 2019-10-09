@@ -397,7 +397,9 @@ namespace randomx {
 	}
 
 	void JitCompilerRiscv::generateProgramLight(Program& prog, ProgramConfiguration& pcfg, uint32_t datasetOffset) {
-	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
+
+		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+	
 		printf("[%s][%d] eMask[0]0x%x eMask[1]0x%x\n",__func__,__LINE__,pcfg.eMask[0],pcfg.eMask[1]);
 		printf("[%s][%d]readReg0:0x%x readReg1:0x%x readReg2:0x%x readReg3:0x%x\n",__func__,__LINE__,pcfg.readReg0,pcfg.readReg1,pcfg.readReg2,pcfg.readReg3);
 		// program_prologue.inc
@@ -466,7 +468,7 @@ namespace randomx {
 		{
 			printf("code pos too long!!!!!!!!\n");
 		}
-		printf("code size:%d buffersize:%d\n",codePos ,CodeSize);
+		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 	}
 
 	template<size_t N>
@@ -474,9 +476,10 @@ namespace randomx {
 		// program_read_dataset_sshash_init.inc
 		memcpy(code + superScalarHashOffset, codeShhInit, codeSshInitSize);
 		codePos = superScalarHashOffset + codeSshInitSize;
-
+		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,superScalarHashOffset,CodeSize);
 		for (unsigned j = 0; j < N; ++j) {
 			SuperscalarProgram& prog = programs[j];
+			printf("prog.getSize()%d\n",prog.getSize());
 			for (unsigned i = 0; i < prog.getSize(); ++i) {
 				Instruction& instr = prog(i);
 				generateSuperscalarCode(instr, reciprocalCache);
@@ -504,6 +507,7 @@ namespace randomx {
 		// JALR
 		i32 = mk_I(RISCVOP_JALR_I, RISCVF3_JALR_JALR, RISCV_R_ZERO, RISCV_R_RA, 0);
 		emit32(i32);
+		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 	}
 
 	template
@@ -690,16 +694,19 @@ namespace randomx {
 			i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_SUB_7,RISCVE7_OP_SUB,RX_R0+instr.dst,RX_R0+instr.dst,RX_R0+instr.src);
 			emit32(i32);
 			break;
-#if 0
 		case randomx::SuperscalarInstructionType::IXOR_R:
-			emit(REX_XOR_RR);
-			emitByte(0xc0 + 8 * instr.dst + instr.src);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_R0 + instr.src);
+			emit32(i32);
 			break;
 		case randomx::SuperscalarInstructionType::IADD_RS:
-			emit(REX_LEA);
-			emitByte(0x04 + 8 * instr.dst);
-			genSIB(instr.getModShift(), instr.src, instr.dst);
+//			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_7, RX_TMP0, RX_R0 + instr.src, (RISCVE7_IMM_SLLI << 5) + instr.getModShift());
+//			emit32(i32);
+//			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
+//			emit32(i32);
 			break;
+#if 0
+
 		case randomx::SuperscalarInstructionType::IMUL_R:
 			emit(REX_IMUL_RR);
 			emitByte(0xc0 + 8 * instr.dst + instr.src);
@@ -1206,7 +1213,7 @@ namespace randomx {
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 			emit32(i32);
 
-			// xor
+			// XOR
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP1);
 			emit32(i32);
 		}

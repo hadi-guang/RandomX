@@ -854,44 +854,44 @@ namespace randomx {
 			case SuperscalarInstructionType::ISUB_R:
 				r[instr.dst] -= r[instr.src];
 				break;
-#if 0
 			case SuperscalarInstructionType::IXOR_R:
 				r[instr.dst] ^= r[instr.src];
 				break;
 			case SuperscalarInstructionType::IADD_RS:
-				r[instr.dst] += r[instr.src] << instr.getModShift();
+//			printf("instr.opcode-----:%d\n",instr.opcode);
+//				r[instr.dst] += r[instr.src] << instr.getModShift();
 				break;
 			case SuperscalarInstructionType::IMUL_R:
-				r[instr.dst] *= r[instr.src];
+//				r[instr.dst] *= r[instr.src];
 				break;
 			case SuperscalarInstructionType::IROR_C:
-				r[instr.dst] = rotr(r[instr.dst], instr.getImm32());
+//				r[instr.dst] = rotr(r[instr.dst], instr.getImm32());
 				break;
 			case SuperscalarInstructionType::IADD_C7:
 			case SuperscalarInstructionType::IADD_C8:
 			case SuperscalarInstructionType::IADD_C9:
-				r[instr.dst] += signExtend2sCompl(instr.getImm32());
+//				r[instr.dst] += signExtend2sCompl(instr.getImm32());
 				break;
 			case SuperscalarInstructionType::IXOR_C7:
 			case SuperscalarInstructionType::IXOR_C8:
 			case SuperscalarInstructionType::IXOR_C9:
-				r[instr.dst] ^= signExtend2sCompl(instr.getImm32());
+//				r[instr.dst] ^= signExtend2sCompl(instr.getImm32());
 				break;
 			case SuperscalarInstructionType::IMULH_R:
-				r[instr.dst] = mulh(r[instr.dst], r[instr.src]);
+//				r[instr.dst] = mulh(r[instr.dst], r[instr.src]);
 				break;
 			case SuperscalarInstructionType::ISMULH_R:
-				r[instr.dst] = smulh(r[instr.dst], r[instr.src]);
+//				r[instr.dst] = smulh(r[instr.dst], r[instr.src]);
 				break;
 			case SuperscalarInstructionType::IMUL_RCP:
-				if (reciprocals != nullptr)
-					r[instr.dst] *= (*reciprocals)[instr.getImm32()];
-				else
-					r[instr.dst] *= randomx_reciprocal(instr.getImm32());
+//				if (reciprocals != nullptr)
+//					r[instr.dst] *= (*reciprocals)[instr.getImm32()];
+//				else
+//					r[instr.dst] *= randomx_reciprocal(instr.getImm32());
 				break;
-#endif
 			default:
-				UNREACHABLE;
+//				UNREACHABLE;
+				NULL;
 			}
 		}
 	}
