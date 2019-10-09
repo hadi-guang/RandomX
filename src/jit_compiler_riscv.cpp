@@ -474,7 +474,6 @@ namespace randomx {
 		// program_read_dataset_sshash_init.inc
 		memcpy(code + superScalarHashOffset, codeShhInit, codeSshInitSize);
 		codePos = superScalarHashOffset + codeSshInitSize;
-#if 0
 
 		for (unsigned j = 0; j < N; ++j) {
 			SuperscalarProgram& prog = programs[j];
@@ -482,6 +481,7 @@ namespace randomx {
 				Instruction& instr = prog(i);
 				generateSuperscalarCode(instr, reciprocalCache);
 			}
+#if 0
 			emit(codeShhLoad, codeSshLoadSize);
 			if (j < N - 1) {
 				emit(REX_MOV_RR64);
@@ -497,8 +497,9 @@ namespace randomx {
 				}
 #endif
 			}
-		}
 #endif
+		}
+
 		// ret
 		// JALR
 		i32 = mk_I(RISCVOP_JALR_I, RISCVF3_JALR_JALR, RISCV_R_ZERO, RISCV_R_RA, 0);
@@ -684,10 +685,12 @@ namespace randomx {
 	void JitCompilerRiscv::generateSuperscalarCode(Instruction& instr, std::vector<uint64_t> &reciprocalCache) {
 		switch ((SuperscalarInstructionType)instr.opcode)
 		{
+
 		case randomx::SuperscalarInstructionType::ISUB_R:
-			emit(REX_SUB_RR);
-			emitByte(0xc0 + 8 * instr.dst + instr.src);
+			i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_SUB_7,RISCVE7_OP_SUB,RX_R0+instr.dst,RX_R0+instr.dst,RX_R0+instr.src);
+			emit32(i32);
 			break;
+#if 0
 		case randomx::SuperscalarInstructionType::IXOR_R:
 			emit(REX_XOR_RR);
 			emitByte(0xc0 + 8 * instr.dst + instr.src);
@@ -770,6 +773,7 @@ namespace randomx {
 			emit(REX_IMUL_RM);
 			emitByte(0xc0 + 8 * instr.dst);
 			break;
+#endif
 		default:
 			UNREACHABLE;
 		}

@@ -47,8 +47,8 @@ namespace randomx {
 		for (unsigned q = 0; q < 8; ++q)
 			r[q] ^= rl[q];
 #else
-//		for (unsigned q = 0; q < 8; ++q)
-//			r[q] = rl[q];
+		for (unsigned q = 0; q < 8; ++q)
+			r[q] = rl[q];
 #endif
 	}
 

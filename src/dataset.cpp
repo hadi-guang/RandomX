@@ -171,9 +171,11 @@ namespace randomx {
 #if 0
 			mixBlock = getMixBlock(registerValue, cache->memory);
 			rx_prefetch_nta(mixBlock);
+#endif
 			SuperscalarProgram& prog = cache->programs[i];
 
 			executeSuperscalar(rl, prog, &cache->reciprocalCache);
+#if 0
 			for (unsigned q = 0; q < 8; ++q)
 				rl[q] ^= load64_native(mixBlock + 8 * q);
 

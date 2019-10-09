@@ -854,6 +854,7 @@ namespace randomx {
 			case SuperscalarInstructionType::ISUB_R:
 				r[instr.dst] -= r[instr.src];
 				break;
+#if 0
 			case SuperscalarInstructionType::IXOR_R:
 				r[instr.dst] ^= r[instr.src];
 				break;
@@ -888,6 +889,7 @@ namespace randomx {
 				else
 					r[instr.dst] *= randomx_reciprocal(instr.getImm32());
 				break;
+#endif
 			default:
 				UNREACHABLE;
 			}
