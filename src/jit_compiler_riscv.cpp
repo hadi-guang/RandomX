@@ -691,6 +691,7 @@ namespace randomx {
 		{
 
 		case randomx::SuperscalarInstructionType::ISUB_R:
+			// SUB
 			i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_SUB_7,RISCVE7_OP_SUB,RX_R0+instr.dst,RX_R0+instr.dst,RX_R0+instr.src);
 			emit32(i32);
 			break;
@@ -700,17 +701,16 @@ namespace randomx {
 			emit32(i32);
 			break;
 		case randomx::SuperscalarInstructionType::IADD_RS:
-//			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_7, RX_TMP0, RX_R0 + instr.src, (RISCVE7_IMM_SLLI << 5) + instr.getModShift());
-//			emit32(i32);
-//			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
-//			emit32(i32);
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_7, RX_TMP0, RX_R0 + instr.src, (RISCVE7_IMM_SLLI << 5) + instr.getModShift());
+			emit32(i32);
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
+			emit32(i32);
+			break;
+		case randomx::SuperscalarInstructionType::IMUL_R:
+//			emit(REX_IMUL_RR);
+//			emitByte(0xc0 + 8 * instr.dst + instr.src);
 			break;
 #if 0
-
-		case randomx::SuperscalarInstructionType::IMUL_R:
-			emit(REX_IMUL_RR);
-			emitByte(0xc0 + 8 * instr.dst + instr.src);
-			break;
 		case randomx::SuperscalarInstructionType::IROR_C:
 			emit(REX_ROT_I8);
 			emitByte(0xc8 + instr.dst);

@@ -858,8 +858,7 @@ namespace randomx {
 				r[instr.dst] ^= r[instr.src];
 				break;
 			case SuperscalarInstructionType::IADD_RS:
-//			printf("instr.opcode-----:%d\n",instr.opcode);
-//				r[instr.dst] += r[instr.src] << instr.getModShift();
+				r[instr.dst] += r[instr.src] << instr.getModShift();
 				break;
 			case SuperscalarInstructionType::IMUL_R:
 //				r[instr.dst] *= r[instr.src];
