@@ -547,7 +547,7 @@ namespace randomx {
 
 	typedef void(JitCompilerRiscv::*InstructionGeneratorRiscv)(Instruction&, int);
 
-	constexpr uint32_t CodeSize = 64 * 1024;
+	constexpr uint32_t CodeSize = 128 * 1024;
 
 	class JitCompilerRiscv {
 	public:

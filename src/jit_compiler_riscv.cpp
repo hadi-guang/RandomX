@@ -339,7 +339,7 @@ namespace randomx {
 	}
 	uint32_t gen_hi(uint32_t val)
 	{
-		if (val & 0b100000000000)
+		if (val & 0x800)
 		{
 			return (val >> 12) + 1;
 		}
@@ -352,6 +352,36 @@ namespace randomx {
 	uint32_t gen_lo(uint32_t val)
 	{
 		return val & 0b111111111111;
+	}
+	uint32_t gen64_hi(uint64_t val)
+	{
+		if (val & 0x80000000)
+		{
+			val = (val >> 32) + 1;
+		}
+		else
+		{
+			val = val >> 32;
+		}
+		if (val & 0x800)
+		{
+			return (val >> 12) + 1;
+		}
+		else
+		{
+			return  val >> 12;
+		}
+	}
+	uint32_t gen64_lo(uint64_t val)
+	{
+		if (val & 0x80000000)
+		{
+			return (val >> 32) + 1;
+		}
+		else
+		{
+			return  val >> 32;
+		}
 	}
 
 	size_t JitCompilerRiscv::getCodeSize() {
@@ -366,17 +396,16 @@ namespace randomx {
 #endif
 		memcpy(code, codePrologue, prologueSize);
 		codePos = prologueSize;
+		printf("[%s][%d] prologue bin beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,0,CodeSize);
+		printf("[%s][%d] prologue bin end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,prologueSize,CodeSize);
+		printf("[%s][%d] epilogue bin beg codePos:0x%x	buffersize:0x%x\n",__func__,__LINE__,epilogueOffset,CodeSize);
+		printf("[%s][%d] epilogue bin end codePos:0x%x	buffersize:0x%x\n",__func__,__LINE__,epilogueOffset+epilogueSize,CodeSize);
+
+		
 		printf("[%s][%d]offset codeLoopBegin:0x%x\n",__func__,__LINE__,codeLoopBegin - codePrologue);
 
-		printf("[%s][%d]prologueSize:0x%x\n",__func__,__LINE__,prologueSize);
-		
-		printf("[%s][%d]epilogueOffset:0x%x\n",__func__,__LINE__,epilogueOffset);
 
-		printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
 		memcpy(code + epilogueOffset, codeEpilogue, epilogueSize);
-
-	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
-
 	}
 
 	JitCompilerRiscv::~JitCompilerRiscv() {
@@ -398,21 +427,15 @@ namespace randomx {
 
 	void JitCompilerRiscv::generateProgramLight(Program& prog, ProgramConfiguration& pcfg, uint32_t datasetOffset) {
 
-		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
-	
 		printf("[%s][%d] eMask[0]0x%x eMask[1]0x%x\n",__func__,__LINE__,pcfg.eMask[0],pcfg.eMask[1]);
 		printf("[%s][%d]readReg0:0x%x readReg1:0x%x readReg2:0x%x readReg3:0x%x\n",__func__,__LINE__,pcfg.readReg0,pcfg.readReg1,pcfg.readReg2,pcfg.readReg3);
 		// program_prologue.inc
 		// 
 		generateProgramPrologue(prog, pcfg);
+		
+		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 #if 1
 		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize);
-//		emit(ADD_EBX_I);
-//		emit32(datasetOffset / CacheLineSize);
-//		emitByte(CALL);
-//		emit32(superScalarHashOffset - (codePos + 4));
-
-		printf("RX_SS_ITEMNUMBER:0x%x\n",datasetOffset / CacheLineSize);
 		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_SS_ITEMNUMBER, gen_hi(datasetOffset));
 		emit32(i32);
@@ -437,6 +460,7 @@ namespace randomx {
 		emit32(i32);
 
 		// ITEMNUMBER = (datasetOffset + ma)  / CacheLineSize
+		// DIVU
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_DIVU_7, RISCVE7_OP_DIVU, RX_SS_ITEMNUMBER, RX_SS_ITEMNUMBER, RX_TMP0);
 		emit32(i32);
 
@@ -451,6 +475,7 @@ namespace randomx {
 #endif
 		//swap ma mx
 		// MVW
+		// ADDIW
 		i32 = mk_I(RISCVOP_IMM32_I, RISCVF3_IMM32_ADDIW, RX_TMP0, RISCV_R_T1, 0);
 		emit32(i32);
 		// SRLI
@@ -462,13 +487,13 @@ namespace randomx {
 		// OR
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RISCV_R_T1, RISCV_R_T1, RX_TMP0);
 		emit32(i32);
+		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 
 		generateProgramEpilogue(prog);
 		if (codePos > CodeSize)
 		{
 			printf("code pos too long!!!!!!!!\n");
 		}
-		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 	}
 
 	template<size_t N>
@@ -479,7 +504,6 @@ namespace randomx {
 		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,superScalarHashOffset,CodeSize);
 		for (unsigned j = 0; j < N; ++j) {
 			SuperscalarProgram& prog = programs[j];
-			printf("prog.getSize()%d\n",prog.getSize());
 			for (unsigned i = 0; i < prog.getSize(); ++i) {
 				Instruction& instr = prog(i);
 				generateSuperscalarCode(instr, reciprocalCache);
@@ -523,7 +547,8 @@ namespace randomx {
 			registerUsage[i] = -1;
 		}
 		codePos = prologueSize;
-		printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
+		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+
 		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
 		uint32_t v;
 		uint8_t rs1,rs2;
@@ -540,6 +565,7 @@ namespace randomx {
 		{
 			rs1 = RX_R1;
 		}
+		// XOR
 		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs1);
 		emit32(v);
 		if (pcfg.readReg1 == 2)
@@ -550,6 +576,7 @@ namespace randomx {
 		{
 			rs2 = RX_R3;
 		}
+		// XOR
 		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs2);
 		emit32(v);
 
@@ -580,10 +607,10 @@ namespace randomx {
 		emit32(i32);
 
 		// clean mx
-		//SRLI
+		// SRLI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RX_MAMX, RX_MAMX, (RISCVE6_IMM_SRLI << 6) + 32);
 		emit32(i32);
-		//SLLI
+		// SLLI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_MAMX, RX_MAMX, (RISCVE6_IMM_SLLI << 6) + 32);
 		emit32(i32);
 
@@ -595,6 +622,7 @@ namespace randomx {
 		{
 			rs1 = RX_R5;
 		}
+		// XOR
 		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_TMP0,RX_TMP0,rs1);
 		emit32(v);
 
@@ -606,6 +634,7 @@ namespace randomx {
 		{
 			rs2 = RX_R7;
 		}
+		// XOR
 		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_TMP0,RX_TMP0,rs2);
 		emit32(v);
 		
@@ -617,20 +646,20 @@ namespace randomx {
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(CacheLineAlignMask));
 		emit32(i32);
 
-		//AND
+		// AND
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_TMP1);
 		emit32(i32);
 		
 		// clean ma
-		//SLLI
+		// SLLI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SLLI << 6) + 32);
 		emit32(i32);
-		//SRLI
+		// SRLI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SRLI << 6) + 32);
 		emit32(i32);
 
 		// set mx
-		//OR
+		// OR
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_MAMX, RX_MAMX, RX_TMP0);
 		emit32(i32);
 
@@ -640,25 +669,28 @@ namespace randomx {
 //		emit(REX_XOR_EAX);
 //		emitByte(0xc0 + pcfg.readReg3);
 #endif
+		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 	}
 
 	void JitCompilerRiscv::generateProgramEpilogue(Program& prog) {
 	uint32_t v;
 #if 1 //randomx
-	printf("[%s][%d]epilogueOffset:0x%x\n",__func__,__LINE__,epilogueOffset);
-	printf("[%s][%d]codePos:0x%x\n",__func__,__LINE__,codePos);
+	printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 
 	// sub program_iterations (t3)
+	// ADDI
 	v = mk_I(RISCVOP_IMM_I,RISCVF3_IMM_ADDI, RX_PROGRAM_ITERATION, RX_PROGRAM_ITERATION,-1);
 	emit32(v);
 
 	// if (program_iterations == zero) jump exit
+	// BRANCH
 	v = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BEQ,RX_PROGRAM_ITERATION,RISCV_R_ZERO,4+loopStoreSize+4);
 	emit32(v);
 	memcpy(code + codePos, codeLoopStore, loopStoreSize);
 	codePos += loopStoreSize;
 
 	// jump to prologue next loop
+	// JAL
 	v = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,prologueSize - codePos);
 	emit32(v);
 
@@ -667,6 +699,7 @@ namespace randomx {
 	codePos += loopStoreLastSize;
 	
 	// jump to epilogue
+	// JAL
 	v = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,epilogueOffset - codePos);
 	emit32(v);
 #else
@@ -678,6 +711,7 @@ namespace randomx {
 		emitByte(JMP);
 		emit32(epilogueOffset - codePos - 4);
 #endif
+	printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 	}
 
 	void JitCompilerRiscv::generateCode(Instruction& instr, int i) {
@@ -689,7 +723,6 @@ namespace randomx {
 	void JitCompilerRiscv::generateSuperscalarCode(Instruction& instr, std::vector<uint64_t> &reciprocalCache) {
 		switch ((SuperscalarInstructionType)instr.opcode)
 		{
-
 		case randomx::SuperscalarInstructionType::ISUB_R:
 			// SUB
 			i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_SUB_7,RISCVE7_OP_SUB,RX_R0+instr.dst,RX_R0+instr.dst,RX_R0+instr.src);
@@ -756,7 +789,6 @@ namespace randomx {
 		case randomx::SuperscalarInstructionType::IXOR_C7:
 		case randomx::SuperscalarInstructionType::IXOR_C8:
 		case randomx::SuperscalarInstructionType::IXOR_C9:
-
 			imm32 = instr.getImm32();
 			// load imm32 to TMP1
 			// LUI
@@ -769,30 +801,41 @@ namespace randomx {
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP1);
 			emit32(i32);
 			break;
-#if 0
 		case randomx::SuperscalarInstructionType::IMULH_R:
-			emit(REX_MOV_RR64);
-			emitByte(0xc0 + instr.dst);
-			emit(REX_MUL_R);
-			emitByte(0xe0 + instr.src);
-			emit(REX_MOV_R64R);
-			emitByte(0xc2 + 8 * instr.dst);
+			// MULHU
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULHU_7, RISCVE7_OP_MULHU, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_R0 + instr.src);
+			emit32(i32);
 			break;
 		case randomx::SuperscalarInstructionType::ISMULH_R:
-			emit(REX_MOV_RR64);
-			emitByte(0xc0 + instr.dst);
-			emit(REX_MUL_R);
-			emitByte(0xe8 + instr.src);
-			emit(REX_MOV_R64R);
-			emitByte(0xc2 + 8 * instr.dst);
+			// MULH
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULH_7, RISCVE7_OP_MULH, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_R0 + instr.src);
+			emit32(i32);
 			break;
 		case randomx::SuperscalarInstructionType::IMUL_RCP:
-			emit(MOV_RAX_I);
-			emit64(reciprocalCache[instr.getImm32()]);
-			emit(REX_IMUL_RM);
-			emitByte(0xc0 + 8 * instr.dst);
+			uint64_t v64;
+			v64 = reciprocalCache[instr.getImm32()];
+			// LUI
+			i32 = mk_U(RISCVOP_LUI_U,RX_TMP0, gen64_hi(v64));
+			emit32(i32);
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_TMP0, gen64_lo(v64));
+			emit32(i32);
+			// SLLI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_7, RX_TMP0, RX_TMP0, (RISCVE7_IMM_SLLI << 5) + 32);
+			emit32(i32);
+			// LUI
+			i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(v64));
+			emit32(i32);
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(v64));
+			emit32(i32);
+			// ADD
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_TMP1);
+			emit32(i32);
+			// MUL
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL_7, RISCVE7_OP_MUL, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
+			emit32(i32);
 			break;
-#endif
 		default:
 //			UNREACHABLE;
 		NULL;
@@ -851,7 +894,7 @@ namespace randomx {
 		*ibc.idst += (*ibc.isrc << ibc.shift) + ibc.imm;
 		//*/
 		registerUsage[instr.dst] = i;
-
+		// SLLI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_7, RX_TMP0, RX_R0 + instr.src, (RISCVE7_IMM_SLLI << 5) + instr.getModShift());
 		emit32(i32);
 
@@ -859,14 +902,17 @@ namespace randomx {
 		{
 			imm32 = instr.getImm32();
 			// load imm32 to TMP
+			// LUI
 			i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 			emit32(i32);
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 			emit32(i32);
-
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_TMP1);
 			emit32(i32);
 		}
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 	}
@@ -890,39 +936,48 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
-			// add src		
+			// add src
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_R0 + instr.src, RX_TMP1);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 				emit32(i32);
 			}
 			else
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 				emit32(i32);
 			}
 		}
 		else {
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP1, RX_L3M);
 			emit32(i32);
 		}
 
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
 		//load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
 		// add to dst
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 	}
@@ -934,18 +989,20 @@ namespace randomx {
 	void JitCompilerRiscv::h_ISUB_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
+			// SUB
 			i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_SUB_7,RISCVE7_OP_SUB,RX_R0+instr.dst,RX_R0+instr.dst,RX_R0+instr.src);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// load imm32 to TMP
+			// LUI
 			i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 			emit32(i32);
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 			emit32(i32);
-			printf("i32: 0x%x\n",i32);
-			
+			// SUB
 			i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_SUB_7,RISCVE7_OP_SUB,RX_R0+instr.dst,RX_R0+instr.dst,RX_TMP1);
 			emit32(i32);
 		}
@@ -956,39 +1013,48 @@ namespace randomx {
 		imm32 = instr.getImm32();
 
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
 			// add src		
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_R0 + instr.src, RX_TMP1);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 				emit32(i32);
 			}
 			else
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 				emit32(i32);
 			}
 		}
 		else {
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP1, RX_L3M);
 			emit32(i32);
 		}
 
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
 		//load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
 		// add to dst
+		// SUB
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB_7, RISCVE7_OP_SUB, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 
@@ -997,19 +1063,21 @@ namespace randomx {
 	void JitCompilerRiscv::h_IMUL_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
-			// mul
+			// MUL
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL_7, RISCVE7_OP_MUL, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_R0 + instr.src);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// load imm32 to TMP
+			// LUI
 			i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 			emit32(i32);
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 			emit32(i32);
 
-			// mul
+			// MUL
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL_7, RISCVE7_OP_MUL, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP1);
 			emit32(i32);
 		}
@@ -1028,41 +1096,47 @@ namespace randomx {
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
-			// add src		
+			// add src
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_R0 + instr.src, RX_TMP1);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 				emit32(i32);
 			}
 			else
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 				emit32(i32);
 			}
 		}
 		else {
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP1, RX_L3M);
 			emit32(i32);
 		}
 
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
 		//load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
 
-		// mul
+		// MUL
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL_7, RISCVE7_OP_MUL, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_IMULH_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		// mulhu
+		// MULHU
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULHU_7, RISCVE7_OP_MULHU, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_R0 + instr.src);
 		emit32(i32);
 	}
@@ -1072,47 +1146,55 @@ namespace randomx {
 
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
-			// add src		
+			// add src
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_R0 + instr.src, RX_TMP1);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 				emit32(i32);
 			}
 			else
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 				emit32(i32);
 			}
 		}
 		else {
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP1, RX_L3M);
 			emit32(i32);
 		}
 
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
 		//load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
 		
-		// mulhu
+		// MULHU
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULHU_7, RISCVE7_OP_MULHU, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 	}
 
 	void JitCompilerRiscv::h_ISMULH_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
-		// mulh
+		// MULH
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULH_7, RISCVE7_OP_MULH, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_R0 + instr.src);
 		emit32(i32);
 	}
@@ -1122,39 +1204,47 @@ namespace randomx {
 
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
-			// add src		
+			// add src
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_R0 + instr.src, RX_TMP1);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 				emit32(i32);
 			}
 			else
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 				emit32(i32);
 			}
 		}
 		else {
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP1, RX_L3M);
 			emit32(i32);
 		}
 
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
 		//load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
-		// mulh
+		// MULH
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MULH_7, RISCVE7_OP_MULH, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 	}
@@ -1173,8 +1263,10 @@ namespace randomx {
 			}
 
 			// load imm32 to TMP
+			// LUI
 			i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 			emit32(i32);
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 			emit32(i32);
 
@@ -1185,22 +1277,25 @@ namespace randomx {
 			}
 
 			// load imm32 to TMP
+			// LUI
 			i32 = mk_U(RISCVOP_LUI_U,RX_TMP2, gen_hi(imm32));
 			emit32(i32);
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP2, RX_TMP2, gen_lo(imm32));
 			emit32(i32);
 
 			//make imm64
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RISCV_R_ZERO, 32);
 			emit32(i32);
-
+			// SLL
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SLL_7, RISCVE7_OP_SLL, RX_TMP2, RX_TMP2, RX_TMP0);
 			emit32(i32);
-
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD, RX_TMP2, RX_TMP2, RX_TMP1);
 			emit32(i32);
 
-			// mul
+			// MUL
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL_7, RISCVE7_OP_MUL, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP2);
 			emit32(i32);
 		}
@@ -1209,6 +1304,7 @@ namespace randomx {
 	void JitCompilerRiscv::h_INEG_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		// neg
+		// SUB
 		i32 =mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB_7, RISCVE7_OP_SUB, RX_R0 + instr.dst, RISCV_R_ZERO, RX_R0 + instr.dst);
 		emit32(i32);
 	}
@@ -1216,15 +1312,17 @@ namespace randomx {
 	void JitCompilerRiscv::h_IXOR_R(Instruction& instr, int i) {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
-			// xor
+			// XOR
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_R0 + instr.src);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// load imm32 to TMP
+			// LUI
 			i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 			emit32(i32);
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 			emit32(i32);
 
@@ -1238,39 +1336,47 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 
 		if (instr.src != instr.dst) {
-			// add src		
+			// add src
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_R0 + instr.src, RX_TMP1);
 			emit32(i32);
 			// mask
 			if (instr.getModMem())
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 				emit32(i32);
 			}
 			else
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 				emit32(i32);
 			}
 		}
 		else {
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP1, RX_L3M);
 			emit32(i32);
 		}
 
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
 		//load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
-		// xor
+		// XOR
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 	}
@@ -1279,6 +1385,7 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
 			//mask
+			// ANDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ANDI, RX_TMP0, RX_R0 + instr.src, 63);
 			emit32(i32);
 		}
@@ -1314,30 +1421,33 @@ namespace randomx {
 		registerUsage[instr.dst] = i;
 		if (instr.src != instr.dst) {
 			//mask
+			// ANDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ANDI, RX_TMP0, RX_R0 + instr.src, 63);
 			emit32(i32);
 		}
 		else {
 			imm32 = instr.getImm32();
 			// mask
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RISCV_R_ZERO, (imm32) & 63);
 			emit32(i32);
 		}
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 64);
 		emit32(i32);
-		
+		// SUB
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB_7, RISCVE7_OP_SUB, RX_TMP1, RX_TMP1, RX_TMP0);
 		emit32(i32);
 
-		// srl
+		// SRL
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SRL_7, RISCVE7_OP_SRL, RX_TMP1, RX_R0 + instr.dst, RX_TMP1);
 		emit32(i32);
 
-		// sll
+		// SLL
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SLL_7, RISCVE7_OP_SLL, RX_TMP0, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 
-		//or
+		// OR
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_R0 + instr.dst, RX_TMP0, RX_TMP1);
 		emit32(i32);
 	}
@@ -1346,12 +1456,13 @@ namespace randomx {
 		if (instr.src != instr.dst) {
 			registerUsage[instr.dst] = i;
 			registerUsage[instr.src] = i;
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_R0 + instr.dst, 0);
 			emit32(i32);
-
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_R0 + instr.dst, RX_R0 + instr.src, 0);
 			emit32(i32);
-
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_R0 + instr.src, RX_TMP0, 0);
 			emit32(i32);
 		}
@@ -1360,25 +1471,28 @@ namespace randomx {
 	void JitCompilerRiscv::h_FSWAP_R(Instruction& instr, int i) {
 		if (instr.dst < RegisterCountFlt)
 		{
+			// FMVXD
 			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVXD_27, RISCVE7_FP_FMVXD_27, RX_TMP0, RX_FH0 + instr.dst, RISCVE2_FP_FMVXD_27);
 			emit32(i32);
 			//	fmv:	fsgnj.d rd, rs, rs
+			// FSGNJD
 			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FSGNJD_7, RISCVE7_FP_FSGNJD_7, RX_FH0 + instr.dst, RX_FL0 + instr.dst, RX_FL0 + instr.dst);
 			emit32(i32);
-			
+			// FMVDX
 			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVDX_27, RISCVE7_FP_FMVDX_27, RX_FL0 + instr.dst, RX_TMP0, RISCVE2_FP_FMVDX_27);
 			emit32(i32);
 		}
 		else
 		{
 			instr.dst -= RegisterCountFlt;
-
+			// FMVXD
 			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVXD_27, RISCVE7_FP_FMVXD_27, RX_TMP0, RX_EH0 + instr.dst, RISCVE2_FP_FMVXD_27);
 			emit32(i32);
 			//	fmv:	fsgnj.d rd, rs, rs
+			// FSGNJD
 			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FSGNJD_7, RISCVE7_FP_FSGNJD_7, RX_EH0 + instr.dst, RX_EL0 + instr.dst, RX_EL0 + instr.dst);
 			emit32(i32);
-			
+			// FMVDX
 			i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FMVDX_27, RISCVE7_FP_FMVDX_27, RX_EL0 + instr.dst, RX_TMP0, RISCVE2_FP_FMVDX_27);
 			emit32(i32);
 		}
@@ -1388,9 +1502,10 @@ namespace randomx {
 		instr.dst %= RegisterCountFlt;
 		instr.src %= RegisterCountFlt;
 		//fadd
+		// FADDD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FADDD, RX_FL0 + instr.dst, RX_FL0 + instr.dst, RX_AL0 + instr.src);
 		emit32(i32);
-		//fadd
+		// FADDD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FADDD, RX_FH0 + instr.dst, RX_FH0 + instr.dst, RX_AH0 + instr.src);
 		emit32(i32);
 	}
@@ -1399,36 +1514,44 @@ namespace randomx {
 		instr.dst %= RegisterCountFlt;
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 		
-		// add src		
+		// add src
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD, RX_TMP0, RX_R0 + instr.src , RX_TMP1);
 		emit32(i32);
 		// mask
 		if (instr.getModMem())
 		{
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 			emit32(i32);
 		}
 		else
 		{
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 			emit32(i32);
 		}
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
-		// load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
 
 		// cvt 0
+		// FCVTDW
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FCVTDW, RX_FTMP0, RX_TMP0, RISCVE2_FP_FCVTDW);
 		emit32(i32);
 		// fadd 0
+		// FADDD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FADDD, RX_FL0 + instr.dst, RX_FL0 + instr.dst, RX_FTMP0);
 		emit32(i32);
 
@@ -1437,9 +1560,11 @@ namespace randomx {
 		emit32(i32);
 
 		// cvt 1
+		// FCVTDW
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FCVTDW, RX_FTMP0, RX_TMP0, RISCVE2_FP_FCVTDW);
 		emit32(i32);
 		// fadd 1
+		// FADDD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FADDD, RX_FH0 + instr.dst, RX_FH0 + instr.dst, RX_FTMP0);
 		emit32(i32);
 
@@ -1448,10 +1573,10 @@ namespace randomx {
 	void JitCompilerRiscv::h_FSUB_R(Instruction& instr, int i) {
 		instr.dst %= RegisterCountFlt;
 		instr.src %= RegisterCountFlt;
-		//FSUB
+		// FSUBD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FSUBD, RX_FL0 + instr.dst, RX_FL0 + instr.dst, RX_AL0 + instr.src);
 		emit32(i32);
-		//FSUB
+		// FSUBD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FSUBD, RX_FH0 + instr.dst, RX_FH0 + instr.dst, RX_AH0 + instr.src);
 		emit32(i32);
 	}
@@ -1460,8 +1585,10 @@ namespace randomx {
 		instr.dst %= RegisterCountFlt;
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 		
@@ -1471,25 +1598,30 @@ namespace randomx {
 		// mask
 		if (instr.getModMem())
 		{
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 			emit32(i32);
 		}
 		else
 		{
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 			emit32(i32);
 		}
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
-		// load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
 	
 		// cvt 0
+		// FCVTDW
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FCVTDW, RX_FTMP0, RX_TMP0, RISCVE2_FP_FCVTDW);
 		emit32(i32);
 		//FSUB L
+		// FSUBD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FSUBD, RX_FL0 + instr.dst, RX_FL0 + instr.dst, RX_FTMP0);
 		emit32(i32);
 	
@@ -1498,9 +1630,11 @@ namespace randomx {
 		emit32(i32);
 	
 		// cvt 1
+		// FCVTDW
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FCVTDW, RX_FTMP0, RX_TMP0, RISCVE2_FP_FCVTDW);
 		emit32(i32);
 		//FSUB H
+		// FSUBD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FSUBD, RX_FH0 + instr.dst, RX_FH0 + instr.dst, RX_FTMP0);
 		emit32(i32);
 
@@ -1532,10 +1666,10 @@ namespace randomx {
 	void JitCompilerRiscv::h_FMUL_R(Instruction& instr, int i) {
 		instr.dst %= RegisterCountFlt;
 		instr.src %= RegisterCountFlt;
-		//FMUL
+		// FMULD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FMULD, RX_EL0 + instr.dst, RX_EL0 + instr.dst, RX_AL0 + instr.src);
 		emit32(i32);
-		//FMUL
+		// FMULD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FMULD, RX_EH0 + instr.dst, RX_EH0 + instr.dst, RX_AH0 + instr.src);
 		emit32(i32);
 	}
@@ -1544,8 +1678,10 @@ namespace randomx {
 		instr.dst %= RegisterCountFlt;
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 		
@@ -1555,22 +1691,26 @@ namespace randomx {
 		// mask
 		if (instr.getModMem())
 		{
+			// ANDS
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 			emit32(i32);
 		}
 		else
 		{
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 			emit32(i32);
 		}
 		//add scratchpad
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_TMP0, RX_SCRATCGPAD);
 		emit32(i32);
-		// load
+		// LD
 		i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP0, RX_TMP0, 0);
 		emit32(i32);
 	
 		// cvt 0
+		// FCVTDW
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FCVTDW, RX_FTMP0, RX_TMP0, RISCVE2_FP_FCVTDW);
 		emit32(i32);
 #if 1
@@ -1588,6 +1728,7 @@ namespace randomx {
 		emit32(i32);
 #endif	
 		//FDIV L
+		// FDIVD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FDIVD, RX_EL0 + instr.dst, RX_EL0 + instr.dst, RX_FTMP0);
 		emit32(i32);
 	
@@ -1596,6 +1737,7 @@ namespace randomx {
 		emit32(i32);
 	
 		// cvt 1
+		// FCVTDW
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FCVTDW, RX_FTMP0, RX_TMP0, RISCVE2_FP_FCVTDW);
 		emit32(i32);
 #if 1
@@ -1613,6 +1755,7 @@ namespace randomx {
 		emit32(i32);
 #endif	
 		//FDIV H
+		// FDIVD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_RM_DYN, RISCVE7_FP_FDIVD, RX_EH0 + instr.dst, RX_EH0 + instr.dst, RX_FTMP0);
 		emit32(i32);
 
@@ -1620,10 +1763,10 @@ namespace randomx {
 
 	void JitCompilerRiscv::h_FSQRT_R(Instruction& instr, int i) {
 		instr.dst %= RegisterCountFlt;
-		//FSQRT
+		// FSQRTD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FSQRTD_DYN_27, RISCVE7_FP_FSQRTD_DYN_27, RX_EL0 + instr.dst, RX_EL0 + instr.dst, RISCVE2_FP_FSQRTD_DYN_27);
 		emit32(i32);
-		//FSQRT
+		// FSQRTD
 		i32 = mk_R(RISCVOP_FP_R, RISCVF3_FP_FSQRTD_DYN_27, RISCVE7_FP_FSQRTD_DYN_27, RX_EH0 + instr.dst, RX_EH0 + instr.dst, RISCVE2_FP_FSQRTD_DYN_27);
 		emit32(i32);
 
@@ -1634,13 +1777,14 @@ namespace randomx {
 
 		imm32 = instr.getImm32();
 		// mask
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RISCV_R_ZERO, (imm32) & 63);
 		emit32(i32);
-		//ADDI
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 64);
 		emit32(i32);
 
-		//SUB
+		// SUB
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB_7, RISCVE7_OP_SUB, RX_TMP1, RX_TMP1, RX_TMP0);
 		emit32(i32);
 
@@ -1661,25 +1805,27 @@ namespace randomx {
 		emit32(i32);
 
 		// RX_TMP1 = 4
-		//ADDI
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 4);
 		emit32(i32);
 
 		// if RX_TMP0> 0 RX_TMP0++
-		//BRANCH
+		// BRANCH
 		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BEQ,RX_TMP0,RISCV_R_ZERO,4+4);
 		emit32(i32);
 
-		//ADDI
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_TMP0, 1);
 		emit32(i32);
 
 		// if RX_TMP0== RX_TMP1   RX_TMP0 = 1
 		//BRANCH RX_TMP1 != 4
+		// BRANCH
 		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BNE,RX_TMP0,RX_TMP1,4+4);
 		emit32(i32);
 
 		//ADDI RX_TMP0 = 1
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RISCV_R_ZERO, 1);
 		emit32(i32);
 
@@ -1757,10 +1903,12 @@ namespace randomx {
 		emit32(i32);
 
 		//BRANCH RX_TMP0 != 0
+		// BRANCH
 		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BNE,RX_TMP0,RISCV_R_ZERO,4+4);
 		emit32(i32);
 
-		// JUMP
+		// jump
+		// JAL
 		i32 = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,instructionOffsets[target] - codePos);
 		emit32(i32);
 
@@ -1773,12 +1921,15 @@ namespace randomx {
 	void JitCompilerRiscv::h_ISTORE(Instruction& instr, int i) {
 		imm32 = instr.getImm32();
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 
 		// add dst
+		// ADD
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_TMP0, RX_R0 + instr.dst, RX_TMP1);
 		emit32(i32);
 		
@@ -1787,17 +1938,20 @@ namespace randomx {
 			// mask
 			if (instr.getModMem())
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L1M);
 				emit32(i32);
 			}
 			else
 			{
+				// AND
 				i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L2M);
 				emit32(i32);
 			}
 		}
 		else
 		{
+			// AND
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_L3M);
 			emit32(i32);
 		}
