@@ -869,12 +869,12 @@ namespace randomx {
 			case SuperscalarInstructionType::IADD_C7:
 			case SuperscalarInstructionType::IADD_C8:
 			case SuperscalarInstructionType::IADD_C9:
-//				r[instr.dst] += signExtend2sCompl(instr.getImm32());
+				r[instr.dst] += signExtend2sCompl(instr.getImm32());
 				break;
 			case SuperscalarInstructionType::IXOR_C7:
 			case SuperscalarInstructionType::IXOR_C8:
 			case SuperscalarInstructionType::IXOR_C9:
-//				r[instr.dst] ^= signExtend2sCompl(instr.getImm32());
+				r[instr.dst] ^= signExtend2sCompl(instr.getImm32());
 				break;
 			case SuperscalarInstructionType::IMULH_R:
 //				r[instr.dst] = mulh(r[instr.dst], r[instr.src]);

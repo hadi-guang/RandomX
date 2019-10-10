@@ -735,49 +735,41 @@ namespace randomx {
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_R0 + instr.dst, RX_TMP0, RX_TMP1);
 			emit32(i32);
 			break;
-#if 0
+
 		case randomx::SuperscalarInstructionType::IADD_C7:
-			emit(REX_81);
-			emitByte(0xc0 + instr.dst);
-			emit32(instr.getImm32());
-			break;
-		case randomx::SuperscalarInstructionType::IXOR_C7:
-			emit(REX_XOR_RI);
-			emitByte(0xf0 + instr.dst);
-			emit32(instr.getImm32());
-			break;
 		case randomx::SuperscalarInstructionType::IADD_C8:
-			emit(REX_81);
-			emitByte(0xc0 + instr.dst);
-			emit32(instr.getImm32());
-#ifdef RANDOMX_ALIGN
-			emit(NOP1);
-#endif
-			break;
-		case randomx::SuperscalarInstructionType::IXOR_C8:
-			emit(REX_XOR_RI);
-			emitByte(0xf0 + instr.dst);
-			emit32(instr.getImm32());
-#ifdef RANDOMX_ALIGN
-			emit(NOP1);
-#endif
-			break;
 		case randomx::SuperscalarInstructionType::IADD_C9:
-			emit(REX_81);
-			emitByte(0xc0 + instr.dst);
-			emit32(instr.getImm32());
-#ifdef RANDOMX_ALIGN
-			emit(NOP2);
-#endif
+			imm32 = instr.getImm32();
+			// load imm32 to TMP1
+			// LUI
+			i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
+			emit32(i32);
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
+			emit32(i32);
+			// add to dst
+			// ADD
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP1);
+			emit32(i32);
 			break;
+
+		case randomx::SuperscalarInstructionType::IXOR_C7:
+		case randomx::SuperscalarInstructionType::IXOR_C8:
 		case randomx::SuperscalarInstructionType::IXOR_C9:
-			emit(REX_XOR_RI);
-			emitByte(0xf0 + instr.dst);
-			emit32(instr.getImm32());
-#ifdef RANDOMX_ALIGN
-			emit(NOP2);
-#endif
+
+			imm32 = instr.getImm32();
+			// load imm32 to TMP1
+			// LUI
+			i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
+			emit32(i32);
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP1);
+			emit32(i32);
 			break;
+#if 0
 		case randomx::SuperscalarInstructionType::IMULH_R:
 			emit(REX_MOV_RR64);
 			emitByte(0xc0 + instr.dst);
@@ -1028,8 +1020,10 @@ namespace randomx {
 		imm32 = instr.getImm32();
 
 		// load imm32 to TMP
+		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_TMP1, gen_hi(imm32));
 		emit32(i32);
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RX_TMP1, gen_lo(imm32));
 		emit32(i32);
 
