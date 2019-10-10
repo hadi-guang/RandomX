@@ -861,10 +861,10 @@ namespace randomx {
 				r[instr.dst] += r[instr.src] << instr.getModShift();
 				break;
 			case SuperscalarInstructionType::IMUL_R:
-//				r[instr.dst] *= r[instr.src];
+				r[instr.dst] *= r[instr.src];
 				break;
 			case SuperscalarInstructionType::IROR_C:
-//				r[instr.dst] = rotr(r[instr.dst], instr.getImm32());
+				r[instr.dst] = rotr(r[instr.dst], instr.getImm32());
 				break;
 			case SuperscalarInstructionType::IADD_C7:
 			case SuperscalarInstructionType::IADD_C8:

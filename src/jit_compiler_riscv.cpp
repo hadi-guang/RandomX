@@ -701,21 +701,41 @@ namespace randomx {
 			emit32(i32);
 			break;
 		case randomx::SuperscalarInstructionType::IADD_RS:
+			// SLLI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_7, RX_TMP0, RX_R0 + instr.src, (RISCVE7_IMM_SLLI << 5) + instr.getModShift());
 			emit32(i32);
+			// ADD
 			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD,RX_R0 + instr.dst, RX_R0 + instr.dst, RX_TMP0);
 			emit32(i32);
 			break;
 		case randomx::SuperscalarInstructionType::IMUL_R:
-//			emit(REX_IMUL_RR);
-//			emitByte(0xc0 + 8 * instr.dst + instr.src);
+			// MUL
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_MUL_7, RISCVE7_OP_MUL, RX_R0 + instr.dst, RX_R0 + instr.dst, RX_R0 + instr.src);
+			emit32(i32);
+			break;
+		case randomx::SuperscalarInstructionType::IROR_C:
+			imm32 = instr.getImm32();
+			// mask
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RISCV_R_ZERO, (imm32) & 63);
+			emit32(i32);
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 64);
+			emit32(i32);
+			// USB
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB_7, RISCVE7_OP_SUB, RX_TMP1, RX_TMP1, RX_TMP0);
+			emit32(i32);
+			// SRL
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SRL_7, RISCVE7_OP_SRL, RX_TMP0, RX_R0 + instr.dst, RX_TMP0);
+			emit32(i32);
+			// SLL
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SLL_7, RISCVE7_OP_SLL, RX_TMP1, RX_R0 + instr.dst, RX_TMP1);
+			emit32(i32);
+			// OR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_R0 + instr.dst, RX_TMP0, RX_TMP1);
+			emit32(i32);
 			break;
 #if 0
-		case randomx::SuperscalarInstructionType::IROR_C:
-			emit(REX_ROT_I8);
-			emitByte(0xc8 + instr.dst);
-			emitByte(instr.getImm32() & 63);
-			break;
 		case randomx::SuperscalarInstructionType::IADD_C7:
 			emit(REX_81);
 			emitByte(0xc0 + instr.dst);
@@ -782,7 +802,8 @@ namespace randomx {
 			break;
 #endif
 		default:
-			UNREACHABLE;
+//			UNREACHABLE;
+		NULL;
 		}
 	}
 
@@ -1270,24 +1291,27 @@ namespace randomx {
 		else {
 			imm32 = instr.getImm32();
 			// mask
+			// ADDI
 			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RISCV_R_ZERO, (imm32) & 63);
 			emit32(i32);
 		}
+		// ADDI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP1, RISCV_R_ZERO, 64);
 		emit32(i32);
-		
+
+		// USB
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SUB_7, RISCVE7_OP_SUB, RX_TMP1, RX_TMP1, RX_TMP0);
 		emit32(i32);
 
-		// srl
+		// SRL
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SRL_7, RISCVE7_OP_SRL, RX_TMP0, RX_R0 + instr.dst, RX_TMP0);
 		emit32(i32);
 
-		// sll
+		// SLL
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_SLL_7, RISCVE7_OP_SLL, RX_TMP1, RX_R0 + instr.dst, RX_TMP1);
 		emit32(i32);
 
-		//or
+		// OR
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_R0 + instr.dst, RX_TMP0, RX_TMP1);
 		emit32(i32);
 	}
