@@ -1309,7 +1309,7 @@ namespace randomx {
 	void JitCompilerRiscv::h_IMUL_RCP(Instruction& instr, int i) {
 		uint64_t divisor = instr.getImm32();
 		int negative = 0;
-		if (!isPowerOf2(divisor)) {
+		if (!isZeroOrPowerOf2(divisor)) {
 			registerUsage[instr.dst] = i;
 			
 			divisor = randomx_reciprocal_fast(divisor);
