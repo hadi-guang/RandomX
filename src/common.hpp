@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace randomx {
 
 	static_assert(RANDOMX_ARGON_MEMORY > 0, "RANDOMX_ARGON_MEMORY must be greater than 0.");
+	static_assert(RANDOMX_ARGON_MEMORY <= 2097152, "RANDOMX_ARGON_MEMORY must not exceed 2097152.");
 	static_assert((RANDOMX_ARGON_MEMORY & (RANDOMX_ARGON_MEMORY - 1)) == 0, "RANDOMX_ARGON_MEMORY must be a power of 2.");
 	static_assert(RANDOMX_DATASET_BASE_SIZE >= 64, "RANDOMX_DATASET_BASE_SIZE must be at least 64.");
 	static_assert((RANDOMX_DATASET_BASE_SIZE & (RANDOMX_DATASET_BASE_SIZE - 1)) == 0, "RANDOMX_DATASET_BASE_SIZE must be a power of 2.");
@@ -45,6 +46,7 @@ namespace randomx {
 	static_assert(RANDOMX_DATASET_EXTRA_SIZE % 64 == 0, "RANDOMX_DATASET_EXTRA_SIZE must be divisible by 64.");
 	static_assert((uint64_t)RANDOMX_DATASET_BASE_SIZE + RANDOMX_DATASET_EXTRA_SIZE <= 17179869184, "Dataset size must not exceed 16 GiB.");
 	static_assert(RANDOMX_PROGRAM_SIZE > 0, "RANDOMX_PROGRAM_SIZE must be greater than 0");
+	static_assert(RANDOMX_PROGRAM_SIZE <= 32768, "RANDOMX_PROGRAM_SIZE must not exceed 32768");
 	static_assert(RANDOMX_PROGRAM_ITERATIONS > 0, "RANDOMX_PROGRAM_ITERATIONS must be greater than 0");
 	static_assert(RANDOMX_PROGRAM_COUNT > 0, "RANDOMX_PROGRAM_COUNT must be greater than 0");
 	static_assert((RANDOMX_SCRATCHPAD_L3 & (RANDOMX_SCRATCHPAD_L3 - 1)) == 0, "RANDOMX_SCRATCHPAD_L3 must be a power of 2.");
@@ -55,6 +57,7 @@ namespace randomx {
 	static_assert((RANDOMX_SCRATCHPAD_L1 & (RANDOMX_SCRATCHPAD_L1 - 1)) == 0, "RANDOMX_SCRATCHPAD_L1 must be a power of 2.");
 	static_assert(RANDOMX_CACHE_ACCESSES > 1, "RANDOMX_CACHE_ACCESSES must be greater than 1");
 	static_assert(RANDOMX_SUPERSCALAR_LATENCY > 0, "RANDOMX_SUPERSCALAR_LATENCY must be greater than 0");
+	static_assert(RANDOMX_SUPERSCALAR_LATENCY <= 10000, "RANDOMX_SUPERSCALAR_LATENCY must not exceed 10000");
 	static_assert(RANDOMX_JUMP_BITS > 0, "RANDOMX_JUMP_BITS must be greater than 0.");
 	static_assert(RANDOMX_JUMP_OFFSET >= 0, "RANDOMX_JUMP_OFFSET must be greater than or equal to 0.");
 	static_assert(RANDOMX_JUMP_BITS + RANDOMX_JUMP_OFFSET <= 16, "RANDOMX_JUMP_BITS + RANDOMX_JUMP_OFFSET must not exceed 16.");

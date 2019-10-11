@@ -37,7 +37,83 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "virtual_memory.hpp"
 #include "zlog.h"
 #include "allocator.hpp"
+#define	PRINT_RISCV_SIZE	1
+#define PRINT_SUPERSCALAR	1
+#define RISCVCOUNT			256
+#define SUPERSCALARCOUNT	14
 namespace randomx {
+
+	//Calculate the required code buffer size that is sufficient for the largest possible program:
+/*
+	prologue bin beg codePos:0x0
+	prologue bin end codePos:0x140
+	epilogue bin beg codePos:0x1ff40
+	epilogue bin end codePos:0x20000
+
+	generateProgramPrologue beg codePos:0x140
+	generateCode beg codePos:0x29c	buffersize:0x20000
+	generateCode end codePos:0x164c  buffersize:0x20000
+	generateProgramPrologue end codePos:0x1678
+	generateProgramLight beg codePos:0x1678
+	generateProgramLight end codePos:0x16e6
+	generateProgramEpilogue beg codePos:0x16e6
+	generateProgramEpilogue end codePos:0x187e
+
+	generateSuperscalarHash beg codePos:0x8000
+	codeShhInit beg codePos:0x8000
+	codeShhInit end codePos:0x80c0
+	generateSuperscalarCode beg codePos:0x80c0
+	generateSuperscalarCode end codePos:0x9124
+	codemixblock beg codePos:0x9124
+	codemixblock end codePos:0x917c
+	generateSuperscalarCode beg codePos:0x917c
+	generateSuperscalarCode end codePos:0xa2f8
+	codemixblock beg codePos:0xa2f8
+	codemixblock end codePos:0xa350
+	generateSuperscalarCode beg codePos:0xa350
+	generateSuperscalarCode end codePos:0xb39c
+	codemixblock beg codePos:0xb39c
+	codemixblock end codePos:0xb3f4
+	generateSuperscalarCode beg codePos:0xb3f4
+	generateSuperscalarCode end codePos:0xc540
+	codemixblock beg codePos:0xc540
+	codemixblock end codePos:0xc598
+	generateSuperscalarCode beg codePos:0xc598
+	generateSuperscalarCode end codePos:0xd6a4
+	codemixblock beg codePos:0xd6a4
+	codemixblock end codePos:0xd6fc
+	generateSuperscalarCode beg codePos:0xd6fc
+	generateSuperscalarCode end codePos:0xe8b8
+	codemixblock beg codePos:0xe8b8
+	codemixblock end codePos:0xe910
+	generateSuperscalarCode beg codePos:0xe910
+	generateSuperscalarCode end codePos:0xfac4
+	codemixblock beg codePos:0xfac4
+	codemixblock end codePos:0xfb1c
+	generateSuperscalarCode beg codePos:0xfb1c
+	generateSuperscalarCode end codePos:0x10c74
+	codemixblock beg codePos:0x10c74
+	codemixblock end codePos:0x10ccc
+	generateSuperscalarHash end codePos:0x10cd0
+
+//*/
+
+	constexpr size_t MaxRandomXInstrCodeSize = 76;   //FDIV_M requires up to 76 bytes of riscv code
+	constexpr size_t MaxSuperscalarInstrSize = 28;   //IMUL_RCP requires 28 bytes of riscv code
+	constexpr size_t SuperscalarProgramHeader = 88; //overhead per superscalar program
+	constexpr size_t CodeAlign = 4096;               //align code size to a multiple of 4 KiB
+	constexpr size_t ReserveCodeSize = CodeAlign;    //function prologue/epilogue + reserve
+	// RandomX 		ReserveCodeSize 0x58E
+	// Superscalar	ReserveCodeSize 0xC4
+
+	constexpr size_t RandomXCodeSize = alignSize(ReserveCodeSize + MaxRandomXInstrCodeSize * RANDOMX_PROGRAM_SIZE, CodeAlign);
+	constexpr size_t SuperscalarSize = alignSize(ReserveCodeSize + (SuperscalarProgramHeader + MaxSuperscalarInstrSize * SuperscalarMaxSize) * RANDOMX_CACHE_ACCESSES, CodeAlign);
+
+	static_assert(RandomXCodeSize < INT32_MAX / 2, "RandomXCodeSize is too large");
+	static_assert(SuperscalarSize < INT32_MAX / 2, "SuperscalarSize is too large");
+	
+	constexpr uint32_t CodeSize = RandomXCodeSize + SuperscalarSize;
+	constexpr int32_t superScalarHashOffset = RandomXCodeSize;
 
 	const uint8_t* codePrologue = (uint8_t*)&randomx_program_prologue;
 	const uint8_t* codeLoopBegin = (uint8_t*)&randomx_program_loop_begin;
@@ -72,7 +148,6 @@ namespace randomx {
 	const int32_t codeSshInitSize = codeProgramEnd - codeShhInit;
 
 	const int32_t epilogueOffset = CodeSize - epilogueSize;
-	constexpr int32_t superScalarHashOffset = 32768;
 
 	static const uint8_t REX_ADD_RR[] = { 0x4d, 0x03 };
 	static const uint8_t REX_ADD_RM[] = { 0x4c, 0x03 };
@@ -383,12 +458,32 @@ namespace randomx {
 			return  val >> 32;
 		}
 	}
-
+#if PRINT_RISCV_SIZE
+	uint32_t LenRandomX[RISCVCOUNT];
+	uint32_t MaxRandomX = 0;
+#endif
+#if PRINT_SUPERSCALAR
+	uint32_t LenSUPERSCALAR[SUPERSCALARCOUNT];
+	uint32_t MaxSUPERSCALAR = 0;
+#endif
 	size_t JitCompilerRiscv::getCodeSize() {
-		return codePos - prologueSize;
+		return CodeSize;
 	}
 
 	JitCompilerRiscv::JitCompilerRiscv() {
+	int i;
+#if PRINT_RISCV_SIZE
+	for (i = 0; i < RISCVCOUNT; ++i)
+	{
+		LenRandomX[i] = 0;
+	}
+#endif
+#if PRINT_SUPERSCALAR
+	for (i = 0; i < SUPERSCALARCOUNT; ++i)
+	{
+		LenSUPERSCALAR[i] = 0;
+	}
+#endif
 #if LINUX_MMAP
 		code = (uint8_t*)allocExecutableMemory(CodeSize);
 #else
@@ -396,12 +491,11 @@ namespace randomx {
 #endif
 		memcpy(code, codePrologue, prologueSize);
 		codePos = prologueSize;
-		printf("[%s][%d] prologue bin beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,0,CodeSize);
-		printf("[%s][%d] prologue bin end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,prologueSize,CodeSize);
-		printf("[%s][%d] epilogue bin beg codePos:0x%x	buffersize:0x%x\n",__func__,__LINE__,epilogueOffset,CodeSize);
-		printf("[%s][%d] epilogue bin end codePos:0x%x	buffersize:0x%x\n",__func__,__LINE__,epilogueOffset+epilogueSize,CodeSize);
+		printf("prologue bin beg codePos:0x%x\n",0);
+		printf("prologue bin end codePos:0x%x\n",prologueSize);
+		printf("epilogue bin beg codePos:0x%x\n",epilogueOffset);
+		printf("epilogue bin end codePos:0x%x\n",epilogueOffset+epilogueSize);
 
-		
 		printf("[%s][%d]offset codeLoopBegin:0x%x\n",__func__,__LINE__,codeLoopBegin - codePrologue);
 
 
@@ -433,7 +527,7 @@ namespace randomx {
 		// 
 		generateProgramPrologue(prog, pcfg);
 		
-		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+		printf("generateProgramLight beg codePos:0x%x\n",codePos);
 
 #if 1	// call SuperscalarHash
 		// save reg
@@ -473,13 +567,27 @@ namespace randomx {
 
 		emit(codeReadDatasetLightSshFin, readDatasetLightFinSize);
 #endif
-		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+		printf("generateProgramLight end codePos:0x%x\n",codePos);
 
 		generateProgramEpilogue(prog);
 		if (codePos > CodeSize)
 		{
 			printf("code pos too long!!!!!!!!\n");
 		}
+#if PRINT_RISCV_SIZE
+		for (int i = 0; i < RISCVCOUNT; ++i)
+		{
+			printf("LenRandomX[%d]:%d\n",i,LenRandomX[i]);
+		}
+		printf("MaxRandomX:%d\n",MaxRandomX);
+#endif
+#if PRINT_SUPERSCALAR
+		for (int i = 0; i < SUPERSCALARCOUNT; ++i)
+		{
+			printf("LenSUPERSCALAR[%d]:%d\n",i,LenSUPERSCALAR[i]);
+		}
+		printf("MaxSUPERSCALAR:%d\n",MaxSUPERSCALAR);
+#endif
 	}
 
 	template<size_t N>
@@ -487,13 +595,18 @@ namespace randomx {
 		// program_read_dataset_sshash_init.inc
 		memcpy(code + superScalarHashOffset, codeShhInit, codeSshInitSize);
 		codePos = superScalarHashOffset + codeSshInitSize;
-		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,superScalarHashOffset,CodeSize);
+		printf("generateSuperscalarHash beg codePos:0x%x\n",superScalarHashOffset);
+		printf("codeShhInit beg codePos:0x%x\n",superScalarHashOffset);
+		printf("codeShhInit end codePos:0x%x\n",codePos);
 		for (unsigned j = 0; j < N; ++j) {
 			SuperscalarProgram& prog = programs[j];
+			printf("generateSuperscalarCode beg codePos:0x%x\n",codePos);
 			for (unsigned i = 0; i < prog.getSize(); ++i) {
 				Instruction& instr = prog(i);
 				generateSuperscalarCode(instr, reciprocalCache);
 			}
+			printf("generateSuperscalarCode end codePos:0x%x\n",codePos);
+			printf("codemixblock beg codePos:0x%x\n",codePos);
 //			mixBlock = getMixBlock(registerValue, cache->memory);
 //			rx_prefetch_nta(mixBlock);
 //			for (unsigned q = 0; q < 8; ++q)
@@ -571,7 +684,7 @@ namespace randomx {
 			emit32(i32);
 			//	registerValue = rl[prog.getAddressRegister()];
 
-			
+			printf("codemixblock end codePos:0x%x\n",codePos);
 #if 0
 			emit(codeShhLoad, codeSshLoadSize);
 			if (j < N - 1) {
@@ -595,7 +708,7 @@ namespace randomx {
 		// JALR
 		i32 = mk_I(RISCVOP_JALR_I, RISCVF3_JALR_JALR, RISCV_R_ZERO, RISCV_R_RA, 0);
 		emit32(i32);
-		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+		printf("generateSuperscalarHash end codePos:0x%x\n",codePos);
 	}
 
 	template
@@ -611,7 +724,7 @@ namespace randomx {
 			registerUsage[i] = -1;
 		}
 		codePos = prologueSize;
-		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+		printf("generateProgramPrologue beg codePos:0x%x\n",codePos);
 
 		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
 		uint32_t v;
@@ -656,12 +769,14 @@ namespace randomx {
 		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
 		codePos += loopLoadSize;
 #endif
+		printf("generateCode beg codePos:0x%x  buffersize:0x%x\n",codePos,CodeSize);
 		for (unsigned i = 0; i < prog.getSize(); ++i) {
 			Instruction& instr = prog(i);
 			instr.src %= RegistersCount;
 			instr.dst %= RegistersCount;
 			generateCode(instr, i);
 		}
+		printf("generateCode end codePos:0x%x  buffersize:0x%x\n",codePos,CodeSize);
 #if 1 // calc mx
 //		mem.mx ^= nreg.r[config.readReg2] ^ nreg.r[config.readReg3];
 //		mem.mx &= CacheLineAlignMask;
@@ -727,13 +842,13 @@ namespace randomx {
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_MAMX, RX_MAMX, RX_TMP0);
 		emit32(i32);
 #endif
-		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+		printf("generateProgramPrologue end codePos:0x%x\n",codePos);
 	}
 
 	void JitCompilerRiscv::generateProgramEpilogue(Program& prog) {
 	uint32_t v;
 #if 1 //randomx
-	printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+	printf("generateProgramEpilogue beg codePos:0x%x\n",codePos);
 
 	// sub program_iterations (t3)
 	// ADDI
@@ -769,16 +884,32 @@ namespace randomx {
 		emitByte(JMP);
 		emit32(epilogueOffset - codePos - 4);
 #endif
-	printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
+	printf("generateProgramEpilogue end codePos:0x%x\n",codePos);
 	}
 
 	void JitCompilerRiscv::generateCode(Instruction& instr, int i) {
+#if PRINT_RISCV_SIZE
+		uint32_t len;
+		len = codePos;
+#endif
 		instructionOffsets.push_back(codePos);
 		auto generator = engine[instr.opcode];
 		(this->*generator)(instr, i);
+#if PRINT_RISCV_SIZE
+		if (codePos - len > LenRandomX[instr.opcode])
+			LenRandomX[instr.opcode] = codePos - len;
+		if (codePos - len > MaxRandomX)
+		{
+			MaxRandomX = codePos - len;
+		}
+#endif
 	}
 
 	void JitCompilerRiscv::generateSuperscalarCode(Instruction& instr, std::vector<uint64_t> &reciprocalCache) {
+	#if PRINT_SUPERSCALAR
+		uint32_t len;
+		len = codePos;
+	#endif
 		switch ((SuperscalarInstructionType)instr.opcode)
 		{
 		case randomx::SuperscalarInstructionType::ISUB_R:
@@ -897,6 +1028,14 @@ namespace randomx {
 		default:
 			UNREACHABLE;
 		}
+	#if PRINT_SUPERSCALAR
+		if (codePos - len > LenSUPERSCALAR[instr.opcode])
+			LenSUPERSCALAR[instr.opcode] = codePos - len;
+		if (codePos - len > MaxSUPERSCALAR)
+		{
+			MaxSUPERSCALAR = codePos - len;
+		}
+	#endif
 	}
 
 	void JitCompilerRiscv::genAddressReg(Instruction& instr, bool rax = true) {
@@ -934,22 +1073,6 @@ namespace randomx {
 	}
 
 	void JitCompilerRiscv::h_IADD_RS(Instruction& instr, int i) {
-		/*
-		ibc.type = InstructionType::IADD_RS;
-		ibc.idst = &nreg->r[dst];
-		if (dst != RegisterNeedsDisplacement) {
-			ibc.isrc = &nreg->r[src];
-			ibc.shift = instr.getModShift();
-			ibc.imm = 0;
-		}
-		else {
-			ibc.isrc = &nreg->r[src];
-			ibc.shift = instr.getModShift();
-			ibc.imm = signExtend2sCompl(instr.getImm32());
-		}
-		registerUsage[dst] = i;
-		*ibc.idst += (*ibc.isrc << ibc.shift) + ibc.imm;
-		//*/
 		registerUsage[instr.dst] = i;
 		// SLLI
 		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_7, RX_TMP0, RX_R0 + instr.src, (RISCVE7_IMM_SLLI << 5) + instr.getModShift());
