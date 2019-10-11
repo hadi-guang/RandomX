@@ -434,7 +434,8 @@ namespace randomx {
 		generateProgramPrologue(prog, pcfg);
 		
 		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
-#if 1
+
+#if 1	// call SuperscalarHash
 		// save reg
 		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize);
 		// LUI
@@ -465,8 +466,6 @@ namespace randomx {
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_DIVU_7, RISCVE7_OP_DIVU, RX_SS_ITEMNUMBER, RX_SS_ITEMNUMBER, RX_TMP0);
 		emit32(i32);
 
-		
-		
 		// call superScalarHashOffset
 		// JAL
 		i32 = mk_J(RISCVOP_JAL_J, RISCV_R_RA, superScalarHashOffset - codePos);
@@ -474,20 +473,6 @@ namespace randomx {
 
 		emit(codeReadDatasetLightSshFin, readDatasetLightFinSize);
 #endif
-		//swap ma mx
-		// MVW
-		// ADDIW
-		i32 = mk_I(RISCVOP_IMM32_I, RISCVF3_IMM32_ADDIW, RX_TMP0, RISCV_R_T1, 0);
-		emit32(i32);
-		// SRLI
-		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SRLI_6, RISCV_R_T1, RISCV_R_T1, (RISCVE6_IMM_SRLI << 6) + 32);
-		emit32(i32);
-		// SLLI
-		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SLLI << 6) + 32);
-		emit32(i32);
-		// OR
-		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RISCV_R_T1, RISCV_R_T1, RX_TMP0);
-		emit32(i32);
 		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 
 		generateProgramEpilogue(prog);
@@ -677,7 +662,7 @@ namespace randomx {
 			instr.dst %= RegistersCount;
 			generateCode(instr, i);
 		}
-#if 1 //randomx
+#if 1 // calc mx
 //		mem.mx ^= nreg.r[config.readReg2] ^ nreg.r[config.readReg3];
 //		mem.mx &= CacheLineAlignMask;
 		// get mx
@@ -741,12 +726,6 @@ namespace randomx {
 		// OR
 		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_OR_7, RISCVE7_OP_OR, RX_MAMX, RX_MAMX, RX_TMP0);
 		emit32(i32);
-
-#else
-//		emit(REX_MOV_RR);
-//		emitByte(0xc0 + pcfg.readReg2);
-//		emit(REX_XOR_EAX);
-//		emitByte(0xc0 + pcfg.readReg3);
 #endif
 		printf("[%s][%d] end codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 	}
