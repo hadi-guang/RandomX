@@ -485,7 +485,7 @@ namespace randomx {
 	}
 #endif
 #if LINUX_MMAP
-		code = (uint8_t*)allocExecutableMemory(CodeSize);
+		code = (uint8_t*)allocMemoryPages(CodeSize);
 #else
 		code = (uint8_t*)AlignedAllocator<CacheLineSize>::allocMemory(CodeSize);
 #endif
@@ -507,6 +507,24 @@ namespace randomx {
 		freePagedMemory(code, CodeSize);
 #else
 		AlignedAllocator<CacheLineSize>::freeMemory(code, CodeSize);
+#endif
+	}
+
+	void JitCompilerRiscv::enableAll() {
+#if LINUX_MMAP
+		setPagesRWX(code, CodeSize);
+#endif
+	}
+
+	void JitCompilerRiscv::enableWriting() {
+#if LINUX_MMAP
+		setPagesRW(code, CodeSize);
+#endif
+	}
+
+	void JitCompilerRiscv::enableExecution() {
+#if LINUX_MMAP
+		setPagesRX(code, CodeSize);
 #endif
 	}
 

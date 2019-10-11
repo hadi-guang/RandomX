@@ -188,11 +188,21 @@ extern "C" {
 					break;
 
 				case RANDOMX_FLAG_JIT:
-					vm = new randomx::CompiledLightVmDefault();
+					if (flags & RANDOMX_FLAG_SECURE) {
+						vm = new randomx::CompiledLightVmDefaultSecure();
+					}
+					else {
+						vm = new randomx::CompiledLightVmDefault();
+					}
 					break;
 
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT:
-					vm = new randomx::CompiledVmDefault();
+					if (flags & RANDOMX_FLAG_SECURE) {
+						vm = new randomx::CompiledVmDefaultSecure();
+					}
+					else {
+						vm = new randomx::CompiledVmDefault();
+					}
 					break;
 
 				case RANDOMX_FLAG_HARD_AES:
@@ -204,11 +214,21 @@ extern "C" {
 					break;
 
 				case RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES:
-					vm = new randomx::CompiledLightVmHardAes();
+					if (flags & RANDOMX_FLAG_SECURE) {
+						vm = new randomx::CompiledLightVmHardAesSecure();
+					}
+					else {
+						vm = new randomx::CompiledLightVmHardAes();
+					}
 					break;
 
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES:
-					vm = new randomx::CompiledVmHardAes();
+					if (flags & RANDOMX_FLAG_SECURE) {
+						vm = new randomx::CompiledVmHardAesSecure();
+					}
+					else {
+						vm = new randomx::CompiledVmHardAes();
+					}
 					break;
 #if LINUX_MMAP
 
@@ -221,11 +241,21 @@ extern "C" {
 					break;
 
 				case RANDOMX_FLAG_JIT | RANDOMX_FLAG_LARGE_PAGES:
-					vm = new randomx::CompiledLightVmLargePage();
+					if (flags & RANDOMX_FLAG_SECURE) {
+						vm = new randomx::CompiledLightVmLargePageSecure();
+					}
+					else {
+						vm = new randomx::CompiledLightVmLargePage();
+					}
 					break;
 
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_LARGE_PAGES:
-					vm = new randomx::CompiledVmLargePage();
+					if (flags & RANDOMX_FLAG_SECURE) {
+						vm = new randomx::CompiledVmLargePageSecure();
+					}
+					else {
+						vm = new randomx::CompiledVmLargePage();
+					}
 					break;
 
 				case RANDOMX_FLAG_HARD_AES | RANDOMX_FLAG_LARGE_PAGES:
@@ -237,11 +267,21 @@ extern "C" {
 					break;
 
 				case RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES | RANDOMX_FLAG_LARGE_PAGES:
-					vm = new randomx::CompiledLightVmLargePageHardAes();
+					if (flags & RANDOMX_FLAG_SECURE) {
+						vm = new randomx::CompiledLightVmLargePageHardAesSecure();
+					}
+					else {
+						vm = new randomx::CompiledLightVmLargePageHardAes();
+					}
 					break;
 
 				case RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT | RANDOMX_FLAG_HARD_AES | RANDOMX_FLAG_LARGE_PAGES:
-					vm = new randomx::CompiledVmLargePageHardAes();
+					if (flags & RANDOMX_FLAG_SECURE) {
+						vm = new randomx::CompiledVmLargePageHardAesSecure();
+					}
+					else {
+						vm = new randomx::CompiledVmLargePageHardAes();
+					}
 					break;
 #endif
 				default:

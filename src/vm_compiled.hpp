@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace randomx {
 
-	template<class Allocator, bool softAes>
+	template<class Allocator, bool softAes, bool secureJit>
 	class CompiledVm : public VmBase<Allocator, softAes> {
 	public:
 		void* operator new(size_t size) {
@@ -49,6 +49,7 @@ namespace randomx {
 		void operator delete(void* ptr) {
 			AlignedAllocator<CacheLineSize>::freeMemory(ptr, sizeof(CompiledVm));
 		}
+		CompiledVm();
 		void setDataset(randomx_dataset* dataset) override;
 		void run(void* seed) override;
 
@@ -65,10 +66,16 @@ namespace randomx {
 		JitCompiler compiler;
 	};
 
-	using CompiledVmDefault = CompiledVm<AlignedAllocator<CacheLineSize>, true>;
-	using CompiledVmHardAes = CompiledVm<AlignedAllocator<CacheLineSize>, false>;
+	using CompiledVmDefault = CompiledVm<AlignedAllocator<CacheLineSize>, true, false>;
+	using CompiledVmHardAes = CompiledVm<AlignedAllocator<CacheLineSize>, false, false>;
 #if LINUX_MMAP
-	using CompiledVmLargePage = CompiledVm<LargePageAllocator, true>;
-	using CompiledVmLargePageHardAes = CompiledVm<LargePageAllocator, false>;
+	using CompiledVmLargePage = CompiledVm<LargePageAllocator, true, false>;
+	using CompiledVmLargePageHardAes = CompiledVm<LargePageAllocator, false, false>;
+#endif
+	using CompiledVmDefaultSecure = CompiledVm<AlignedAllocator<CacheLineSize>, true, true>;
+	using CompiledVmHardAesSecure = CompiledVm<AlignedAllocator<CacheLineSize>, false, true>;
+#if LINUX_MMAP
+	using CompiledVmLargePageSecure = CompiledVm<LargePageAllocator, true, true>;
+	using CompiledVmLargePageHardAesSecure = CompiledVm<LargePageAllocator, false, true>;
 #endif
 }

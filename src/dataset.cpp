@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 #include <limits>
 #include <cstring>
+#include <cassert>
 
 #include "common.hpp"
 #include "dataset.hpp"
@@ -92,6 +93,9 @@ namespace randomx {
 		context.flags = ARGON2_DEFAULT_FLAGS;
 		context.version = ARGON2_VERSION_NUMBER;
 
+		int inputsValid = rxa2_validate_inputs(&context);
+		assert(inputsValid == ARGON2_OK);
+
 		/* 2. Align memory size */
 		/* Minimum memory_blocks = 8L blocks, where L is the number of lanes */
 		memory_blocks = context.m_cost;
@@ -137,8 +141,10 @@ namespace randomx {
 
 	void initCacheCompile(randomx_cache* cache, const void* key, size_t keySize) {
 		initCache(cache, key, keySize);
+		cache->jit->enableWriting();
 		cache->jit->generateSuperscalarHash(cache->programs, cache->reciprocalCache);
 		cache->jit->generateDatasetInitCode();
+		cache->jit->enableExecution();
 	}
 
 	constexpr uint64_t superscalarMul0 = 6364136223846793005ULL;
