@@ -217,6 +217,8 @@ namespace randomx {
 #define RX_SCRATCGPAD			RISCV_R_T2
 #define RX_PROGRAM_ITERATION	RISCV_R_T3
 #define RX_SPADDR				RISCV_R_T4
+#define RX_DATASET				RISCV_R_T6
+
 #define RX_TMP0		RISCV_R_S0
 #define RX_TMP1		RISCV_R_S4
 #define RX_TMP2		RISCV_R_S5

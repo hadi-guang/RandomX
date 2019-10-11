@@ -889,8 +889,7 @@ namespace randomx {
 					r[instr.dst] *= randomx_reciprocal(instr.getImm32());
 				break;
 			default:
-//				UNREACHABLE;
-				NULL;
+				UNREACHABLE;
 			}
 		}
 	}

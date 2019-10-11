@@ -435,6 +435,7 @@ namespace randomx {
 		
 		printf("[%s][%d] beg codePos:0x%x  buffersize:0x%x\n",__func__,__LINE__,codePos,CodeSize);
 #if 1
+		// save reg
 		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize);
 		// LUI
 		i32 = mk_U(RISCVOP_LUI_U,RX_SS_ITEMNUMBER, gen_hi(datasetOffset));
@@ -508,6 +509,84 @@ namespace randomx {
 				Instruction& instr = prog(i);
 				generateSuperscalarCode(instr, reciprocalCache);
 			}
+//			mixBlock = getMixBlock(registerValue, cache->memory);
+//			rx_prefetch_nta(mixBlock);
+//			for (unsigned q = 0; q < 8; ++q)
+//				rl[q] ^= load64_native(mixBlock + 8 * q);
+			constexpr uint32_t mask = CacheSize / CacheLineSize - 1;
+			// LUI
+			i32 = mk_U(RISCVOP_LUI_U,RX_TMP0, gen_hi(mask));
+			emit32(i32);
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_TMP0, RX_TMP0, gen_lo(mask));
+			emit32(i32);
+			// AND
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_TMP0, RX_TMP0, RX_SS_ITEMNUMBER);
+			emit32(i32);
+
+			// SLLI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_SLLI_6, RX_TMP0, RX_TMP0, (RISCVE6_IMM_SLLI << 6) + 6);
+			emit32(i32);
+
+			// ADD
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_ADD_7, RISCVE7_OP_ADD, RX_TMP0, RX_TMP0 , RX_DATASET);
+			emit32(i32);
+
+			// LD
+			i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP1, RX_TMP0, 0);
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R0, RX_R0, RX_TMP1);
+			emit32(i32);
+			// LD
+			i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP1, RX_TMP0, 8);
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R1, RX_R1, RX_TMP1);
+			emit32(i32);
+			// LD
+			i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP1, RX_TMP0, 16);
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R2, RX_R2, RX_TMP1);
+			emit32(i32);
+			// LD
+			i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP1, RX_TMP0, 24);
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R3, RX_R3, RX_TMP1);
+			emit32(i32);
+			// LD
+			i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP1, RX_TMP0, 32);
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R4, RX_R4, RX_TMP1);
+			emit32(i32);
+			// LD
+			i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP1, RX_TMP0, 40);
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R5, RX_R5, RX_TMP1);
+			emit32(i32);
+			// LD
+			i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP1, RX_TMP0, 48);
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R6, RX_R6, RX_TMP1);
+			emit32(i32);
+			// LD
+			i32 = mk_I(RISCVOP_LOAD_I, RISCVF3_LOAD_LD, RX_TMP1, RX_TMP0, 56);
+			emit32(i32);
+			// XOR
+			i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_XOR_7, RISCVE7_OP_XOR, RX_R7, RX_R7, RX_TMP1);
+			emit32(i32);
+
+			// ADDI
+			i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_SS_ITEMNUMBER, RX_R0 + prog.getAddressRegister(), 0);
+			emit32(i32);
+			//	registerValue = rl[prog.getAddressRegister()];
+
+			
 #if 0
 			emit(codeShhLoad, codeSshLoadSize);
 			if (j < N - 1) {
@@ -837,8 +916,7 @@ namespace randomx {
 			emit32(i32);
 			break;
 		default:
-//			UNREACHABLE;
-		NULL;
+			UNREACHABLE;
 		}
 	}
 

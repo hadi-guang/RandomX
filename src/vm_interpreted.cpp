@@ -86,7 +86,7 @@ namespace randomx {
 
 			mem.mx ^= nreg.r[config.readReg2] ^ nreg.r[config.readReg3];
 			mem.mx &= CacheLineAlignMask;
-//			datasetPrefetch(datasetOffset + mem.mx);
+			datasetPrefetch(datasetOffset + mem.mx);
 			datasetRead(datasetOffset + mem.ma, nreg.r);
 			std::swap(mem.mx, mem.ma);
 
