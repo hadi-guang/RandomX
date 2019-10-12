@@ -534,7 +534,7 @@ namespace randomx {
 		memcpy(code + codePos, codeReadDataset, readDatasetSize);
 		codePos += readDatasetSize;
 #endif
-		generateProgramEpilogue(prog);
+		generateProgramEpilogue(prog, pcfg);
 	}
 
 	void JitCompilerRiscv::generateProgramLight(Program& prog, ProgramConfiguration& pcfg, uint32_t datasetOffset) {
@@ -587,7 +587,7 @@ namespace randomx {
 #endif
 		printf("generateProgramLight end codePos:0x%x\n",codePos);
 
-		generateProgramEpilogue(prog);
+		generateProgramEpilogue(prog, pcfg);
 		if (codePos > CodeSize)
 		{
 			printf("code pos too long!!!!!!!!\n");
@@ -741,13 +741,38 @@ namespace randomx {
 		for (unsigned i = 0; i < 8; ++i) {
 			registerUsage[i] = -1;
 		}
+		uint8_t rs1,rs2;
+#if 1	//set first load spAddr0 spAddr1 init code
+		codePos = ((uint8_t*)randomx_program_prologue_first_load) - ((uint8_t*)randomx_program_prologue);
+		if (pcfg.readReg0 == 0)
+		{
+			rs1 = RX_R0;
+		}
+		else//1
+		{
+			rs1 = RX_R1;
+		}
+		// XOR
+		i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs1);
+		emit32(i32);
+		if (pcfg.readReg1 == 2)
+		{
+			rs2 = RX_R2;
+		}
+		else//3
+		{
+			rs2 = RX_R3;
+		}
+		// XOR
+		i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs2);
+		emit32(i32);
+
+#endif
 		codePos = prologueSize;
 		printf("generateProgramPrologue beg codePos:0x%x\n",codePos);
 
 		memcpy(code + codePos - 48, &pcfg.eMask, sizeof(pcfg.eMask));
-		uint32_t v;
-		uint8_t rs1,rs2;
-#if 1 //randomx
+#if 0 //randomx
 		//	uint64_t spMix = nreg.r[config.readReg0] ^ nreg.r[config.readReg1];
 		//	spAddr0 ^= spMix;
 		//	spAddr1 ^= spMix >> 32;
@@ -761,8 +786,8 @@ namespace randomx {
 			rs1 = RX_R1;
 		}
 		// XOR
-		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs1);
-		emit32(v);
+		i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs1);
+		emit32(i32);
 		if (pcfg.readReg1 == 2)
 		{
 			rs2 = RX_R2;
@@ -772,21 +797,19 @@ namespace randomx {
 			rs2 = RX_R3;
 		}
 		// XOR
-		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs2);
-		emit32(v);
+		i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs2);
+		emit32(i32);
 
 		//	spAddr0 &= ScratchpadL3Mask64;
 		//	spAddr1 &= ScratchpadL3Mask64;
-		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
-		codePos += loopLoadSize;
-#else
-		emit(REX_XOR_RAX_R64);
-		emitByte(0xc0 + pcfg.readReg0);
-		emit(REX_XOR_RAX_R64);
-		emitByte(0xc0 + pcfg.readReg1);
-		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
-		codePos += loopLoadSize;
+		// AND
+		i32 = mk_R(RISCVOP_OP_R, RISCVF3_OP_AND_7, RISCVE7_OP_AND, RX_SPADDR, RX_SPADDR, RX_SCRATCHPAD_MASK);
+		emit32(i32);
 #endif
+
+		memcpy(code + codePos, codeLoopLoad, loopLoadSize);
+		codePos += loopLoadSize;
+
 		printf("generateCode beg codePos:0x%x  buffersize:0x%x\n",codePos,CodeSize);
 		for (unsigned i = 0; i < prog.getSize(); ++i) {
 			Instruction& instr = prog(i);
@@ -795,7 +818,7 @@ namespace randomx {
 			generateCode(instr, i);
 		}
 		printf("generateCode end codePos:0x%x  buffersize:0x%x\n",codePos,CodeSize);
-#if 1 // calc mx
+#if 1 // calc and set mx
 //		mem.mx ^= nreg.r[config.readReg2] ^ nreg.r[config.readReg3];
 //		mem.mx &= CacheLineAlignMask;
 		// get mx
@@ -820,8 +843,8 @@ namespace randomx {
 			rs1 = RX_R5;
 		}
 		// XOR
-		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_TMP0,RX_TMP0,rs1);
-		emit32(v);
+		i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_TMP0,RX_TMP0,rs1);
+		emit32(i32);
 
 		if (pcfg.readReg3 == 6)
 		{
@@ -832,8 +855,8 @@ namespace randomx {
 			rs2 = RX_R7;
 		}
 		// XOR
-		v = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_TMP0,RX_TMP0,rs2);
-		emit32(v);
+		i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_TMP0,RX_TMP0,rs2);
+		emit32(i32);
 		
 		//load CacheLineAlignMask
 		// LUI
@@ -863,46 +886,74 @@ namespace randomx {
 		printf("generateProgramPrologue end codePos:0x%x\n",codePos);
 	}
 
-	void JitCompilerRiscv::generateProgramEpilogue(Program& prog) {
-	uint32_t v;
-#if 1 //randomx
-	printf("generateProgramEpilogue beg codePos:0x%x\n",codePos);
+	void JitCompilerRiscv::generateProgramEpilogue(Program& prog, ProgramConfiguration& pcfg) {
+		printf("generateProgramEpilogue beg codePos:0x%x\n",codePos);
+		// spaddr bak
+		// ADDI
+		i32 = mk_I(RISCVOP_IMM_I, RISCVF3_IMM_ADDI, RX_SPADDR_BAK, RX_SPADDR, 0);
+		emit32(i32);
+#if 1// calc next spAddr0 spAddr1
+		uint8_t rs1,rs2;
+		//	uint64_t spMix = nreg.r[config.readReg0] ^ nreg.r[config.readReg1];
+		//	spAddr0 ^= spMix;
+		//	spAddr1 ^= spMix >> 32;
 
-	// sub program_iterations (t3)
-	// ADDI
-	v = mk_I(RISCVOP_IMM_I,RISCVF3_IMM_ADDI, RX_PROGRAM_ITERATION, RX_PROGRAM_ITERATION,-1);
-	emit32(v);
+		if (pcfg.readReg0 == 0)
+		{
+			rs1 = RX_R0;
+		}
+		else//1
+		{
+			rs1 = RX_R1;
+		}
+		// XOR
+		i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RISCV_R_ZERO,rs1);
+		emit32(i32);
+		if (pcfg.readReg1 == 2)
+		{
+			rs2 = RX_R2;
+		}
+		else//3
+		{
+			rs2 = RX_R3;
+		}
+		// XOR
+		i32 = mk_R(RISCVOP_OP_R,RISCVF3_OP_XOR_7,RISCVE7_OP_XOR,RX_SPADDR,RX_SPADDR,rs2);
+		emit32(i32);
 
-	// if (program_iterations == zero) jump exit
-	// BRANCH
-	v = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BEQ,RX_PROGRAM_ITERATION,RISCV_R_ZERO,4+loopStoreSize+4);
-	emit32(v);
-	memcpy(code + codePos, codeLoopStore, loopStoreSize);
-	codePos += loopStoreSize;
+		//	spAddr0 &= ScratchpadL3Mask64;
+		//	spAddr1 &= ScratchpadL3Mask64;
+		emit((const uint8_t*)&randomx_prefetch_scratchpad, ((uint8_t*)&randomx_prefetch_scratchpad_end) - ((uint8_t*)&randomx_prefetch_scratchpad));
+#endif
+#if 1 //loop finish jump and store
 
-	// jump to prologue next loop
-	// JAL
-	v = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,prologueSize - codePos);
-	emit32(v);
+		// sub program_iterations (t3)
+		// ADDI
+		i32 = mk_I(RISCVOP_IMM_I,RISCVF3_IMM_ADDI, RX_PROGRAM_ITERATION, RX_PROGRAM_ITERATION,-1);
+		emit32(i32);
 
-	// exit: loop end
-	memcpy(code + codePos, codeLoopStoreLast, loopStoreLastSize);
-	codePos += loopStoreLastSize;
-	
-	// jump to epilogue
-	// JAL
-	v = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,epilogueOffset - codePos);
-	emit32(v);
-#else
+		// if (program_iterations == zero) jump exit
+		// BRANCH
+		i32 = mk_B(RISCVOP_BRANCH_B,RISCVF3_BRANCH_BEQ,RX_PROGRAM_ITERATION,RISCV_R_ZERO,4+loopStoreSize+4);
+		emit32(i32);
 		memcpy(code + codePos, codeLoopStore, loopStoreSize);
 		codePos += loopStoreSize;
-		emit(SUB_EBX);
-		emit(JNZ);
-		emit32(prologueSize - codePos - 4);
-		emitByte(JMP);
-		emit32(epilogueOffset - codePos - 4);
+
+		// jump to prologue next loop
+		// JAL
+		i32 = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,prologueSize - codePos);
+		emit32(i32);
+
+		// exit: loop end
+		memcpy(code + codePos, codeLoopStoreLast, loopStoreLastSize);
+		codePos += loopStoreLastSize;
+		
+		// jump to epilogue
+		// JAL
+		i32 = mk_J(RISCVOP_JAL_J,RISCV_R_ZERO,epilogueOffset - codePos);
+		emit32(i32);
 #endif
-	printf("generateProgramEpilogue end codePos:0x%x\n",codePos);
+		printf("generateProgramEpilogue end codePos:0x%x\n",codePos);
 	}
 
 	void JitCompilerRiscv::generateCode(Instruction& instr, int i) {

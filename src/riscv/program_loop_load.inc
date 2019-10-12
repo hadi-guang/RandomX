@@ -1,7 +1,5 @@
 ##	load reg from scratchpad
 
-# calc offset of scratchpad
-	and	t4,	t4,	t5
 	
 # get spAddr0 -> s5
 	addw	s5,zero,t4

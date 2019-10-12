@@ -37,7 +37,10 @@
 #define WINABI
 #endif
 
+.global DECL(randomx_prefetch_scratchpad)
+.global DECL(randomx_prefetch_scratchpad_end)
 .global DECL(randomx_program_prologue)
+.global DECL(randomx_program_prologue_first_load)
 .global DECL(randomx_program_loop_begin)
 .global DECL(randomx_program_loop_load)
 .global DECL(randomx_program_start)
@@ -67,6 +70,12 @@
 
 #define db .byte
 
+DECL(randomx_prefetch_scratchpad):
+	and		t4,	t4,	t5
+# TODO:prefetch scratchpad
+DECL(randomx_prefetch_scratchpad_end):
+
+;#	prologue bin beg
 .balign 64
 DECL(randomx_program_prologue):
 	#include "riscv/program_prologue.inc"
@@ -78,11 +87,17 @@ curip:
 	ld s9,		0x10(s4)	# load E 'or' mask lo
 	ld s10,		0x18(s4)	# load E 'or' mask hi
 	ld s11,		0x08(s4)	# load scale mask
+
+DECL(randomx_program_prologue_first_load):
+	xor		t4,	t4,	a0
+	xor		t4,	t4,	a0
+	and		t4,	t4,	t5
 	j DECL(randomx_program_loop_begin)
 
 .balign 64
 	#include "riscv/program_constants.inc"
 
+;#	prologue bin end
 .balign 64
 DECL(randomx_program_loop_begin):
 	nop
@@ -167,10 +182,12 @@ call_offset:
 #	pop rbx
 #	ret
 
+;#	epilogue bin beg
 .balign 64
 DECL(randomx_program_epilogue):
 	#include "riscv/program_epilogue.inc"
 
+;#	epilogue bin end
 .balign 64
 DECL(randomx_sshash_load):
 #	#include "asm/program_sshash_load.inc"
@@ -197,37 +214,36 @@ curip1:
 
 ;#	TMP0 = (itemNumber + 1) * superscalarMul0;
 ;#	rl[0] = TMP0
+;#	load r1_add -> TMP1
+;#	rl[1] = rl[0] ^ superscalarAdd1;
+;#	load r2_add -> TMP1
+;#	rl[2] = rl[0] ^ superscalarAdd2;
+;#	load r3_add -> TMP1
+;#	rl[3] = rl[0] ^ superscalarAdd3;
+;#	load r4_add -> TMP1
+;#	rl[4] = rl[0] ^ superscalarAdd4;
+;#	load r5_add -> TMP1
+;#	rl[5] = rl[0] ^ superscalarAdd5;
+;#	load r6_add -> TMP1
+;#	rl[6] = rl[0] ^ superscalarAdd6;
+;#	load r7_add -> TMP1
+;#	rl[7] = rl[0] ^ superscalarAdd7;
 	mul 	s0,	s0,	s4
 	mv	a0,	s0
-;#	load r1_add -> TMP1
 	ld s4,		(0x08)(s5)
-;#	rl[1] = rl[0] ^ superscalarAdd1;
 	xor	a1,	a0,	s4
-;#	load r2_add -> TMP1
 	ld s4,		(0x10)(s5)
-;#	rl[2] = rl[0] ^ superscalarAdd2;
 	xor	a2,	a0,	s4
-;#	load r3_add -> TMP1
 	ld s4,		(0x18)(s5)
-;#	rl[3] = rl[0] ^ superscalarAdd3;
 	xor	a3,	a0,	s4
-;#	load r4_add -> TMP1
 	ld s4,		(0x20)(s5)
-;#	rl[4] = rl[0] ^ superscalarAdd4;
 	xor	a4,	a0,	s4
-;#	load r5_add -> TMP1
 	ld s4,		(0x28)(s5)
-;#	rl[5] = rl[0] ^ superscalarAdd5;
 	xor	a5,	a0,	s4
-;#	load r6_add -> TMP1
 	ld s4,		(0x30)(s5)
-;#	rl[6] = rl[0] ^ superscalarAdd6;
 	xor	a6,	a0,	s4
-;#	load r7_add -> TMP1
 	ld s4,		(0x38)(s5)
-;#	rl[7] = rl[0] ^ superscalarAdd7;
 	xor	a7,	a0,	s4
-
 	j DECL(randomx_program_end)
 
 .balign 64

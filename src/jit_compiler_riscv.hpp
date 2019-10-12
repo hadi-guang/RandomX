@@ -58,8 +58,8 @@ namespace randomx {
 	; s3  -> L3M									need save
 	; s4  -> TMP1									need save
 	; s5  -> TMP2									need save
-	; s6  -> 										need save
-	; s7  -> 										need save
+	; s6  -> SS_ITEMNUMBER							need save
+	; s7  -> SPADDR_BAK								need save
 	; s8  -> E 'and' mask  =	0x00ffffffffffffff	need save
 	; s9  -> E 'or' mask low=	0x3*00000000******	need save
 	; s10 -> E 'or' mask high=	0x3*00000000******	need save
@@ -169,7 +169,7 @@ namespace randomx {
 #define	RISCV_R_S4		(20)	// TMP1									need save
 #define	RISCV_R_S5		(21)	// TMP2									need save
 #define	RISCV_R_S6		(22)	// superscalar itemNumber				need save
-#define	RISCV_R_S7		(23)	//										need save
+#define	RISCV_R_S7		(23)	// SPADDR_BAK							need save
 #define	RISCV_R_S8		(24)	// E 'and' mask							need save
 #define	RISCV_R_S9		(25)	// E 'or' mask low						need save
 #define	RISCV_R_S10		(26)	// E 'or' mask high						need save
@@ -213,10 +213,13 @@ namespace randomx {
 #define RISCV_FT11		(31)
 
 
-#define	RX_MAMX		RISCV_R_T1
+#define	RX_MAMX					RISCV_R_T1
 #define RX_SCRATCGPAD			RISCV_R_T2
 #define RX_PROGRAM_ITERATION	RISCV_R_T3
 #define RX_SPADDR				RISCV_R_T4
+#define RX_SPADDR_BAK			RISCV_R_S7
+
+#define RX_SCRATCHPAD_MASK		RISCV_R_T5
 #define RX_DATASET				RISCV_R_T6
 
 #define RX_TMP0		RISCV_R_S0
@@ -582,7 +585,7 @@ namespace randomx {
 		uint32_t imm32;
 
 		void generateProgramPrologue(Program&, ProgramConfiguration&);
-		void generateProgramEpilogue(Program&);
+		void generateProgramEpilogue(Program&, ProgramConfiguration&);
 		void genAddressReg(Instruction&, bool);
 		void genAddressRegDst(Instruction&);
 		void genAddressImm(Instruction&);

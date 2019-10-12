@@ -1,5 +1,5 @@
 # get spAddr1 -> s5
-	srli	s5,	t4,32
+	srli	s5,	s7,32
 	add		s4,	t2,s5
 
 ## store randomx r0-r7 to scratchpad
@@ -13,7 +13,7 @@
 	sd		a7,	56(s4)
 
 # get spAddr0 -> s5
-	addw	s5,zero,t4
+	addw	s5,zero,s7
 	add		s4,	t2,s5
 
 # reg f = f ^ e
@@ -65,6 +65,3 @@
 	xor			s5,s5,s0
 	sd			s5,56(s4)
 #	fmv.d.x	fa7,s5		# randomx fh3
-
-#  clean spAddr0 spAddr1
-	mv	t4,	zero
