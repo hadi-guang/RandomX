@@ -44,16 +44,47 @@ typedef enum {
   RANDOMX_FLAG_HARD_AES = 2,
   RANDOMX_FLAG_FULL_MEM = 4,
   RANDOMX_FLAG_JIT = 8,
-  RANDOMX_FLAG_SECURE = 16
+  RANDOMX_FLAG_SECURE = 16,
+  RANDOMX_FLAG_ARGON2_SSSE3 = 32,
+  RANDOMX_FLAG_ARGON2_AVX2 = 64,
+  RANDOMX_FLAG_ARGON2 = 96
 } randomx_flags;
 
 typedef struct randomx_dataset randomx_dataset;
 typedef struct randomx_cache randomx_cache;
 typedef struct randomx_vm randomx_vm;
 
+
 #if defined(__cplusplus)
+
+#ifdef __cpp_constexpr
+#define CONSTEXPR constexpr
+#else
+#define CONSTEXPR
+#endif
+
+inline CONSTEXPR randomx_flags operator |(randomx_flags a, randomx_flags b) {
+	return static_cast<randomx_flags>(static_cast<int>(a) | static_cast<int>(b));
+}
+inline CONSTEXPR randomx_flags operator &(randomx_flags a, randomx_flags b) {
+	return static_cast<randomx_flags>(static_cast<int>(a) & static_cast<int>(b));
+}
+inline randomx_flags& operator |=(randomx_flags& a, randomx_flags b) {
+	return a = a | b;
+}
+
 extern "C" {
 #endif
+
+/**
+ * @return The recommended flags to be used on the current machine.
+ *         Does not include:
+ *            RANDOMX_FLAG_LARGE_PAGES
+ *            RANDOMX_FLAG_FULL_MEM
+ *            RANDOMX_FLAG_SECURE
+ *         These flags must be added manually if desired.
+ */
+RANDOMX_EXPORT randomx_flags randomx_get_flags(void);
 
 /**
  * Creates a randomx_cache structure and allocates memory for RandomX Cache.
@@ -62,10 +93,17 @@ extern "C" {
  *        RANDOMX_FLAG_LARGE_PAGES - allocate memory in large pages
  *        RANDOMX_FLAG_JIT - create cache structure with JIT compilation support; this makes
  *                           subsequent Dataset initialization faster
+ *        Optionally, one of these two flags may be selected:
+ *        RANDOMX_FLAG_ARGON2_SSSE3 - optimized Argon2 for CPUs with the SSSE3 instruction set
+ *                                   makes subsequent cache initialization faster
+ *        RANDOMX_FLAG_ARGON2_AVX2 - optimized Argon2 for CPUs with the AVX2 instruction set
+ *                                   makes subsequent cache initialization faster
  *
  * @return Pointer to an allocated randomx_cache structure.
- *         NULL is returned if memory allocation fails or if the RANDOMX_FLAG_JIT
- *         is set and JIT compilation is not supported on the current platform.
+ *         Returns NULL if:
+ *         (1) memory allocation fails
+ *         (2) the RANDOMX_FLAG_JIT is set and JIT compilation is not supported on the current platform
+ *         (3) an invalid or unsupported RANDOMX_FLAG_ARGON2 value is set
  */
 RANDOMX_EXPORT randomx_cache *randomx_alloc_cache(randomx_flags flags);
 

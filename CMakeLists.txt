@@ -31,7 +31,10 @@ cmake_minimum_required(VERSION 2.8.7)
 set (randomx_sources
 src/aes_hash.cpp
 src/argon2_ref.c
+src/argon2_ssse3.c
+src/argon2_avx2.c
 src/bytecode_machine.cpp
+src/cpu.cpp
 src/dataset.cpp
 src/soft_aes.cpp
 src/virtual_memory.cpp
@@ -103,6 +106,14 @@ if (ARCH_ID STREQUAL "x86_64" OR ARCH_ID STREQUAL "x86-64" OR ARCH_ID STREQUAL "
   else()
     # default build has hardware AES enabled (software AES can be selected at runtime)
     add_flag("-maes")
+    check_c_compiler_flag(-mssse3 HAVE_SSSE3)
+    if(HAVE_SSSE3)
+      set_source_files_properties(src/argon2_ssse3.c COMPILE_FLAGS -mssse3)
+    endif()
+    check_c_compiler_flag(-mavx2 HAVE_AVX2)
+    if(HAVE_AVX2)
+      set_source_files_properties(src/argon2_avx2.c COMPILE_FLAGS -mavx2)
+    endif()
   endif()
 endif()
 
@@ -121,6 +132,13 @@ if (ARM_ID STREQUAL "aarch64" OR ARM_ID STREQUAL "arm64" OR ARM_ID STREQUAL "arm
     src/jit_compiler_a64.cpp)
   # cheat because cmake and ccache hate each other
   set_property(SOURCE src/jit_compiler_a64_static.S PROPERTY LANGUAGE C)
+
+  # not sure if this check is needed
+  include(CheckIncludeFile)
+  check_include_file(asm/hwcap.h HAVE_HWCAP)
+  if(HAVE_HWCAP)
+    add_definitions(-DHAVE_HWCAP)
+  endif()
 
   if(ARCH STREQUAL "native")
     add_flag("-march=native")

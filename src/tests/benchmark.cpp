@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "stopwatch.hpp"
 #include "utility.hpp"
 #include "../randomx.h"
+#include "../dataset.hpp"
 #include "../blake2/endian.h"
 #include "../common.hpp"
 #ifdef _WIN32
@@ -92,6 +93,9 @@ void printUsage(const char* executable) {
 	std::cout << "  --init Q      initialize dataset with Q threads (default: 1)" << std::endl;
 	std::cout << "  --nonces N    run N nonces (default: 1000)" << std::endl;
 	std::cout << "  --seed S      seed for cache initialization (default: 0)" << std::endl;
+	std::cout << "  --ssse3       use optimized Argon2 for SSSE3 CPUs" << std::endl;
+	std::cout << "  --avx2        use optimized Argon2 for AVX2 CPUs" << std::endl;
+	std::cout << "  --auto        select the best options for the current CPU" << std::endl;
 }
 
 struct MemoryException : public std::exception {
@@ -144,7 +148,7 @@ void mine(randomx_vm* vm, uint32_t& atomicNonce, uint64_t* result, uint32_t nonc
 }
 
 int main(int argc, char** argv) {
-	bool softAes, miningMode, verificationMode, help, largePages, jit, secure;
+	bool softAes, miningMode, verificationMode, help, largePages, jit, secure, ssse3, avx2, autoFlags;
 	int noncesCount, threadCount, initThreadCount;
 	uint64_t threadAffinity;
 	int32_t seedValue;
@@ -165,10 +169,13 @@ int main(int argc, char** argv) {
 	readOption("--jit", argc, argv, jit);
 	readOption("--help", argc, argv, help);
 	readOption("--secure", argc, argv, secure);
+	readOption("--ssse3", argc, argv, ssse3);
+	readOption("--avx2", argc, argv, avx2);
+	readOption("--auto", argc, argv, autoFlags);
 
 	store32(&seed, seedValue);
 
-	std::cout << "RandomX benchmark v1.1.3" << std::endl;
+	std::cout << "RandomX benchmark v1.1.4" << std::endl;
 
 	if (help || (!miningMode && !verificationMode)) {
 		printUsage(argv[0]);
@@ -192,21 +199,60 @@ int main(int argc, char** argv) {
 #endif
 	randomx_dataset* dataset;
 	randomx_cache* cache;
-	randomx_flags flags = RANDOMX_FLAG_DEFAULT;
+	randomx_flags flags;
 
+	if (autoFlags) {
+#if LINUX_THREAD
+		initThreadCount = std::thread::hardware_concurrency();
+		flags = randomx_get_flags();
+#endif
+	}
+	else {
+		flags = RANDOMX_FLAG_DEFAULT;
+		if (ssse3) {
+			flags |= RANDOMX_FLAG_ARGON2_SSSE3;
+		}
+		if (avx2) {
+			flags |= RANDOMX_FLAG_ARGON2_AVX2;
+		}
+		if (!softAes) {
+			flags |= RANDOMX_FLAG_HARD_AES;
+		}
+		if (jit) {
+			flags |= RANDOMX_FLAG_JIT;
+		}
+	}
+
+	if (largePages) {
+		flags |= RANDOMX_FLAG_LARGE_PAGES;
+	}
 	if (miningMode) {
-		flags = (randomx_flags)(flags | RANDOMX_FLAG_FULL_MEM);
+		flags |= RANDOMX_FLAG_FULL_MEM;
+	}
+	if (secure) {
+		flags |= RANDOMX_FLAG_SECURE;
+	}
+
+	if (flags & RANDOMX_FLAG_ARGON2_AVX2) {
+		std::cout << " - Argon2 implementation: AVX2" << std::endl;
+	}
+	else if (flags & RANDOMX_FLAG_ARGON2_SSSE3) {
+		std::cout << " - Argon2 implementation: SSSE3" << std::endl;
+	}
+	else {
+		std::cout << " - Argon2 implementation: reference" << std::endl;
+	}
+
+	if (flags & RANDOMX_FLAG_FULL_MEM) {
 		std::cout << " - full memory mode (2080 MiB)" << std::endl;
 	}
 	else {
 		std::cout << " - light memory mode (256 MiB)" << std::endl;
 	}
 
-	if (jit) {
-		flags = (randomx_flags)(flags | RANDOMX_FLAG_JIT);
+	if (flags & RANDOMX_FLAG_JIT) {
 		std::cout << " - JIT compiled mode ";
-		if (secure) {
-			flags = (randomx_flags)(flags | RANDOMX_FLAG_SECURE);
+		if (flags & RANDOMX_FLAG_SECURE) {
 			std::cout << "(secure)";
 		}
 		std::cout << std::endl;
@@ -215,16 +261,14 @@ int main(int argc, char** argv) {
 		std::cout << " - interpreted mode" << std::endl;
 	}
 
-	if (softAes) {
-		std::cout << " - software AES mode" << std::endl;
-	}
-	else {
-		flags = (randomx_flags)(flags | RANDOMX_FLAG_HARD_AES);
+	if (flags & RANDOMX_FLAG_HARD_AES) {
 		std::cout << " - hardware AES mode" << std::endl;
 	}
+	else {
+		std::cout << " - software AES mode" << std::endl;
+	}
 
-	if (largePages) {
-		flags = (randomx_flags)(flags | RANDOMX_FLAG_LARGE_PAGES);
+	if (flags & RANDOMX_FLAG_LARGE_PAGES) {
 		std::cout << " - large pages mode" << std::endl;
 	}
 	else {
@@ -241,10 +285,13 @@ int main(int argc, char** argv) {
 	std::cout << " ..." << std::endl;
 
 	try {
-		if (jit && !RANDOMX_HAVE_COMPILER) {
+		if (nullptr == randomx::selectArgonImpl(flags)) {
+			throw std::runtime_error("Unsupported Argon2 implementation");
+		}
+		if ((flags & RANDOMX_FLAG_JIT) && !RANDOMX_HAVE_COMPILER) {
 			throw std::runtime_error("JIT compilation is not supported on this platform. Try without --jit");
 		}
-		if (!jit && RANDOMX_HAVE_COMPILER) {
+		if (!(flags & RANDOMX_FLAG_JIT) && RANDOMX_HAVE_COMPILER) {
 			std::cout << "WARNING: You are using the interpreter mode. Use --jit for optimal performance." << std::endl;
 		}
 
@@ -291,7 +338,7 @@ int main(int argc, char** argv) {
 		for (int i = 0; i < threadCount; ++i) {
 			randomx_vm *vm = randomx_create_vm(flags, cache, dataset);
 			if (vm == nullptr) {
-				if (!softAes) {
+				if ((flags & RANDOMX_FLAG_HARD_AES)) {
 					throw std::runtime_error("Cannot create VM with the selected options. Try using --softAes");
 				}
 				if (largePages) {
@@ -309,10 +356,7 @@ int main(int argc, char** argv) {
 				int cpuid = -1;
 				if (threadAffinity)
 					cpuid = cpuid_from_mask(threadAffinity, i);
-				if (softAes)
-					threads.push_back(std::thread(&mine, vms[i], std::ref(atomicNonce), std::ref(result), noncesCount, i, cpuid));
-				else
-					threads.push_back(std::thread(&mine, vms[i], std::ref(atomicNonce), std::ref(result), noncesCount, i, cpuid));
+				threads.push_back(std::thread(&mine, vms[i], std::ref(atomicNonce), std::ref(result), noncesCount, i, cpuid));
 			}
 			for (unsigned i = 0; i < threads.size(); ++i) {
 				threads[i].join();
